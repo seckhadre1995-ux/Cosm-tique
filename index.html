@@ -3,201 +3,610 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmetique Services Pro | Saint-Louis</title>
+    <title>Cosmetique Services | Saint-Louis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fafafa; }
-        .admin-panel { display: none; position: fixed; inset: 0; background: white; z-index: 100; padding: 20px; overflow-y: auto; }
-        .preview-img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc; margin-bottom: 15px; overflow: hidden; }
-        .preview-img img { width: 100%; height: 100%; object-fit: cover; }
-        .wa-float { position: fixed; bottom: 100px; right: 20px; background: #25d366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 50; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        
+        :root { --gold: #D4AF37; --dark: #0A0A0A; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fafafa; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        .font-luxury { font-family: 'Playfair Display', serif; }
+
+        /* 1. SPLASH SCREEN */
+        #splash { position: fixed; inset: 0; background: var(--dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .logo-cs { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 2.5rem; font-weight: bold; animation: pulseGold 2s infinite; position: relative; z-index: 2; }
+        @keyframes pulseGold { 0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(212, 175, 55, 0); } 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); } }
+        
+        .particles { position: absolute; inset: 0; pointer-events: none; }
+        .particle { position: absolute; background: var(--gold); border-radius: 50%; opacity: 0.3; animation: float 10s infinite linear; }
+        @keyframes float { from { transform: translateY(100vh); } to { transform: translateY(-10vh); } }
+
+        .typewriter h1 { overflow: hidden; white-space: nowrap; border-right: 2px solid var(--gold); animation: typing 2s steps(20, end), blink .75s step-end infinite; }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink { from, to { border-color: transparent } 50% { border-color: var(--gold); } }
+
+        /* 5. ANIMATIONS & REVEAL */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* UI ELEMENTS */
+        .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #F9F295 50%, #D4AF37 100%); }
+        .bottom-nav { backdrop-filter: blur(15px); background: rgba(255, 255, 255, 0.85); border-top: 1px solid rgba(0,0,0,0.05); }
+        .nav-indicator { position: absolute; bottom: 0; height: 3px; background: var(--gold); transition: all 0.3s ease; border-radius: 3px 3px 0 0; }
+        
+        .cart-drawer { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .cart-drawer.open { transform: translateX(0); }
+
+        .wa-float { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Modal Gallery Swipe */
+        .gallery-container { display: flex; transition: transform 0.3s ease-out; cursor: grab; }
+        .gallery-dot.active { background: var(--gold); width: 20px; }
     </style>
 </head>
-<body class="pb-32">
+<body class="pb-24">
 
-    <!-- HEADER -->
-    <header class="p-4 bg-white shadow-sm flex justify-between items-center sticky top-0 z-40">
-        <h1 class="font-bold text-xl tracking-tighter">COSMETIQUE <span class="text-yellow-600">SERVICES</span></h1>
-        <button onclick="openAdmin()" class="bg-gray-100 p-2 rounded-full text-gray-400"><i class="fas fa-cog"></i></button>
+    <!-- 1. SPLASH SCREEN -->
+    <div id="splash">
+        <div class="particles" id="particles-container"></div>
+        <div class="logo-cs animate__animated animate__fadeIn">CS</div>
+        <div class="typewriter mt-6">
+            <h1 class="text-white text-xl font-bold tracking-widest">COSMETIQUE SERVICES</h1>
+        </div>
+        <p id="splash-sub" class="text-gray-400 text-[10px] tracking-[0.4em] mt-2 opacity-0">SAINT-LOUIS NGALLÈLE</p>
+        <div class="w-48 h-[2px] bg-gray-800 mt-12 rounded-full overflow-hidden">
+            <div id="splash-progress" class="h-full bg-yellow-600 transition-all duration-[2500ms] w-0"></div>
+        </div>
+    </div>
+
+    <!-- 2. HEADER -->
+    <header id="header" class="fixed top-0 inset-x-0 z-[60] glass-header px-4 py-4 flex justify-between items-center transition-all duration-300 bg-white/80 backdrop-blur-md">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center text-yellow-500 font-bold border border-yellow-500/30">CS</div>
+            <div>
+                <h2 class="text-sm font-black leading-none">COSMETIQUE <span class="text-yellow-600">SERVICES</span></h2>
+                <p class="text-[8px] text-gray-500 font-bold">NGALLÈLE, ST-LOUIS</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleView()" class="text-gray-400 w-8 h-8 flex items-center justify-center"><i id="view-icon" class="fas fa-th-large"></i></button>
+            <div class="relative cursor-pointer" onclick="toggleCart()">
+                <i class="fas fa-shopping-bag text-xl"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-2 bg-red-600 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full hidden animate__animated animate__bounceIn">0</span>
+            </div>
+        </div>
     </header>
 
-    <!-- RECHERCHE & FILTRES -->
-    <div class="p-4 bg-white">
-        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Rechercher un produit..." class="w-full bg-gray-100 p-3 rounded-2xl border-none text-sm mb-4">
-        <div id="catMenu" class="flex gap-2 overflow-x-auto no-scrollbar pb-2"></div>
+    <!-- 4. RECHERCHE ET FILTRES -->
+    <div class="mt-20 px-4">
+        <div class="relative group">
+            <input type="text" id="searchInput" oninput="renderProducts()" placeholder="Rechercher une pépite..." class="w-full bg-gray-100 border-none rounded-2xl py-4 px-12 focus:ring-2 focus:ring-yellow-500 text-sm transition-all">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-yellow-600 transition-colors"></i>
+        </div>
+        <div id="categoryContainer" class="flex gap-2 overflow-x-auto no-scrollbar py-4">
+            <!-- Dynamique -->
+        </div>
     </div>
 
-    <!-- GRILLE PRODUITS -->
-    <main id="productGrid" class="p-4 grid grid-cols-2 gap-4">
-        <!-- Les produits s'affichent ici -->
+    <!-- 5. GRILLE PRODUITS -->
+    <main id="productGrid" class="px-4 grid grid-cols-2 gap-4">
+        <!-- Skeletons initial -->
+        <div class="skeleton h-64 rounded-3xl"></div>
+        <div class="skeleton h-64 rounded-3xl"></div>
     </main>
 
-    <!-- BOUTON WHATSAPP -->
-    <a href="https://wa.me/221778165450" class="wa-float animate-bounce"><i class="fab fa-whatsapp"></i></a>
+    <!-- 8. BOUTON WHATSAPP FLOTTANT -->
+    <a href="https://wa.me/221778165450" target="_blank" class="wa-float fixed bottom-24 right-5 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center text-2xl shadow-xl z-40">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 
-    <!-- PANIER (Résumé rapide) -->
-    <div id="cartBar" class="fixed bottom-0 left-0 right-0 bg-black text-white p-5 rounded-t-[2.5rem] flex justify-between items-center shadow-2xl z-50">
-        <div>
-            <p class="text-[10px] text-gray-400">Total panier</p>
-            <p id="totalPrice" class="font-bold text-lg text-yellow-500 text-sm">0 FCFA</p>
+    <!-- 3. BOTTOM NAVIGATION BAR -->
+    <nav class="fixed bottom-0 inset-x-0 h-20 bottom-nav z-50 flex justify-around items-center px-6">
+        <div class="nav-indicator w-12" id="navIndicator"></div>
+        <button onclick="changeTab('accueil', this)" class="nav-item flex flex-col items-center gap-1 active-tab">
+            <i class="fas fa-home text-lg text-yellow-600"></i>
+            <span class="text-[9px] font-bold">ACCUEIL</span>
+        </button>
+        <button onclick="changeTab('découvrir', this)" class="nav-item flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-compass text-lg"></i>
+            <span class="text-[9px] font-bold">DÉCOUVRIR</span>
+        </button>
+        <button onclick="toggleCart()" class="nav-item flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-shopping-cart text-lg"></i>
+            <span class="text-[9px] font-bold">PANIER</span>
+        </button>
+        <button onclick="openAdmin()" class="nav-item flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-cog text-lg"></i>
+            <span class="text-[9px] font-bold">GÉRER</span>
+        </button>
+    </nav>
+
+    <!-- 7. PANIER DRAWER -->
+    <div id="cartOverlay" class="fixed inset-0 bg-black/40 z-[70] hidden" onclick="toggleCart()"></div>
+    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-[85%] max-w-md bg-white z-[80] cart-drawer flex flex-col shadow-2xl">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h2 class="font-luxury text-2xl">Panier</h2>
+            <button onclick="toggleCart()" class="text-2xl text-gray-300">&times;</button>
         </div>
-        <button onclick="sendOrder()" class="bg-yellow-600 px-6 py-3 rounded-xl font-bold text-sm">COMMANDER</button>
+        <div id="cartContent" class="flex-grow overflow-y-auto p-4 space-y-4">
+            <!-- Dynamique -->
+        </div>
+        <div class="p-6 bg-gray-50 space-y-4">
+            <div class="flex justify-between items-end">
+                <span class="text-xs text-gray-400 font-bold uppercase">Total à payer</span>
+                <span id="cartTotal" class="text-2xl font-black text-yellow-700">0 FCFA</span>
+            </div>
+            <div class="flex justify-center gap-4 grayscale opacity-60 py-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d1/Orange_logo.svg" class="h-4">
+                <img src="https://wave.com/static/wave-logo-fb9e2d7d.png" class="h-4">
+                <img src="https://logodix.com/logo/2115629.png" class="h-4">
+            </div>
+            <button onclick="sendOrder()" class="w-full gold-gradient text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition shadow-lg">
+                <i class="fab fa-whatsapp text-2xl"></i> COMMANDER
+            </button>
+        </div>
+    </aside>
+
+    <!-- 6. MODAL DÉTAIL / GALERIE -->
+    <div id="detailModal" class="fixed inset-0 z-[100] hidden bg-black flex-col animate__animated animate__fadeIn">
+        <button onclick="closeDetail()" class="absolute top-6 right-6 z-[110] bg-white/20 backdrop-blur-md text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl">&times;</button>
+        
+        <div class="relative w-full h-[60vh] overflow-hidden bg-black">
+            <div id="galleryTrack" class="gallery-container h-full"></div>
+            <div id="galleryDots" class="absolute bottom-6 w-full flex justify-center gap-2"></div>
+        </div>
+
+        <div class="flex-grow bg-white rounded-t-[3rem] -mt-10 relative z-10 p-8 overflow-y-auto no-scrollbar shadow-2xl">
+            <div id="detailBody"></div>
+        </div>
     </div>
 
-    <!-- MODAL ADMIN (AJOUT DE PRODUIT) -->
-    <div id="adminPanel" class="admin-panel">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-red-600 uppercase">Gestion Boutique</h2>
-            <button onclick="closeAdmin()" class="text-3xl">&times;</button>
+    <!-- 9. ADMIN PANEL -->
+    <div id="adminPanel" class="fixed inset-0 z-[120] hidden bg-white overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-luxury">Dashboard</h2>
+            <button onclick="closeAdmin()" class="bg-gray-100 w-12 h-12 rounded-full">&times;</button>
         </div>
 
-        <div class="space-y-4">
-            <!-- ZONE PHOTO -->
-            <label class="block">
-                <span class="text-xs font-bold text-gray-500 uppercase">Photo du produit</span>
-                <div id="imagePreview" class="preview-img mt-1">
-                    <span id="placeholderText">📸 Cliquez pour prendre une photo</span>
-                </div>
-                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="previewFile()">
-                <button onclick="document.getElementById('imageInput').click()" class="w-full bg-gray-200 p-3 rounded-xl text-sm font-bold mb-4">CHOISIR UNE IMAGE / CAMERA</button>
-            </label>
-
-            <input type="text" id="pName" placeholder="Nom de l'article (ex: Lait Mixa)" class="w-full p-4 bg-gray-50 rounded-xl border-none">
-            <div class="grid grid-cols-2 gap-4">
-                <input type="number" id="pPrice" placeholder="Prix (FCFA)" class="w-full p-4 bg-gray-50 rounded-xl border-none">
-                <select id="pCat" class="w-full p-4 bg-gray-50 rounded-xl border-none">
-                    <option value="Soins">Soins</option>
-                    <option value="Parfums">Parfums</option>
-                    <option value="Sacs">Sacs</option>
-                    <option value="Chaussures">Chaussures</option>
-                </select>
+        <div id="adminLogin" class="max-w-md mx-auto py-20 text-center">
+            <div class="w-20 h-20 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-shield-alt text-3xl text-yellow-600"></i>
             </div>
-            <textarea id="pDesc" placeholder="Petite description..." class="w-full p-4 bg-gray-50 rounded-xl border-none h-24"></textarea>
-            
-            <button onclick="saveProduct()" class="w-full bg-black text-white p-5 rounded-2xl font-bold uppercase tracking-widest mt-4">Publier l'article</button>
-            
-            <hr class="my-8">
-            <h3 class="font-bold text-gray-400 mb-4">LISTE DES ARTICLES</h3>
-            <div id="adminList" class="space-y-2"></div>
+            <input type="password" id="adminPass" placeholder="Code d'accès" class="w-full border-2 border-gray-100 p-5 rounded-2xl mb-4 text-center text-2xl focus:border-yellow-500 transition-all outline-none">
+            <button onclick="verifyAdmin()" class="w-full bg-black text-white p-5 rounded-2xl font-bold tracking-widest active:scale-95 transition">S'IDENTIFIER</button>
+        </div>
+
+        <div id="adminControls" class="hidden space-y-8 animate__animated animate__fadeIn">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="exportJSON()" class="bg-blue-50 text-blue-600 p-4 rounded-2xl font-bold text-sm"><i class="fas fa-download mr-2"></i>Export</button>
+                <label class="bg-purple-50 text-purple-600 p-4 rounded-2xl font-bold text-sm text-center cursor-pointer">
+                    <i class="fas fa-upload mr-2"></i>Import <input type="file" onchange="importJSON(event)" hidden>
+                </label>
+            </div>
+
+            <form id="productForm" class="bg-gray-50 p-6 rounded-[2.5rem] space-y-4" onsubmit="handleSave(event)">
+                <h3 class="font-bold text-gray-400 text-xs uppercase tracking-widest">Nouveau Produit</h3>
+                <input type="hidden" id="editId">
+                <input type="text" id="pName" placeholder="Nom de l'article" class="w-full p-4 rounded-xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="pPrice" placeholder="Prix" class="p-4 rounded-xl ring-1 ring-gray-200 outline-none" required>
+                    <input type="number" id="pOld" placeholder="Ancien prix" class="p-4 rounded-xl ring-1 ring-gray-200 outline-none">
+                </div>
+                <input type="text" id="pCat" list="cats-list" placeholder="Catégorie" class="w-full p-4 rounded-xl ring-1 ring-gray-200 outline-none" required>
+                <datalist id="cats-list"></datalist>
+                
+                <textarea id="pDesc" placeholder="Description complète..." class="w-full p-4 rounded-xl ring-1 ring-gray-200 outline-none h-24"></textarea>
+
+                <div class="space-y-2">
+                    <p class="text-[10px] font-bold text-gray-400">PHOTOS (MAX 5)</p>
+                    <div id="photoPreviews" class="grid grid-cols-5 gap-2"></div>
+                    <label class="flex items-center justify-center w-full h-16 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
+                        <i class="fas fa-camera text-gray-400 mr-2"></i> <span class="text-xs text-gray-500 font-bold">AJOUTER PHOTOS</span>
+                        <input type="file" multiple accept="image/*" onchange="handlePhotos(event)" hidden>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-black text-white p-5 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition">PUBLIER SUR LE SITE</button>
+            </form>
+
+            <div id="adminList" class="space-y-3">
+                <!-- Dynamique -->
+            </div>
         </div>
     </div>
 
     <script>
+        // --- CONFIGURATION & ÉTAT ---
         let db = JSON.parse(localStorage.getItem('cosme_2026_db')) || [];
         let cart = [];
-        let currentImage = ""; // Stockera l'image compressée
+        let filterCat = 'Tout';
+        let viewMode = 'grid';
+        let currentPhotos = [];
+        let currentGalleryIndex = 0;
 
-        // --- GESTION PHOTO (LA MEILLEURE FAÇON) ---
-        function previewFile() {
-            const file = document.getElementById('imageInput').files[0];
-            const reader = new FileReader();
-
-            reader.onloadend = function() {
-                const img = new Image();
-                img.src = reader.result;
-                img.onload = function() {
-                    // COMPRESSION AUTOMATIQUE (Canvas)
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; // Largeur max pour le web
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    // Conversion en texte léger (Base64)
-                    currentImage = canvas.toDataURL('image/jpeg', 0.7); // Qualité 70% pour la vitesse
-                    
-                    // Afficher l'aperçu
-                    document.getElementById('imagePreview').innerHTML = `<img src="${currentImage}">`;
-                }
+        // --- SPLASH SCREEN ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('particles-container');
+            for(let i=0; i<15; i++){
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.width = p.style.height = (Math.random() * 4 + 1) + 'px';
+                p.style.animationDelay = Math.random() * 10 + 's';
+                container.appendChild(p);
             }
-            if (file) reader.readAsDataURL(file);
+            document.getElementById('splash-progress').style.width = '100%';
+            setTimeout(() => document.getElementById('splash-sub').classList.add('animate__fadeIn'), 1000);
+            setTimeout(() => {
+                document.getElementById('splash').style.transform = 'translateY(-100%)';
+                initSite();
+            }, 3000);
+        });
+
+        function initSite() {
+            renderCategories();
+            renderProducts();
+            setupObserver();
         }
 
-        // --- GESTION BOUTIQUE ---
-        function saveProduct() {
-            const name = document.getElementById('pName').value;
-            const price = document.getElementById('pPrice').value;
-            const cat = document.getElementById('pCat').value;
-            const desc = document.getElementById('pDesc').value;
-
-            if(!name || !price || !currentImage) return alert("Veuillez remplir le nom, le prix et ajouter une photo !");
-
-            const product = { id: Date.now(), name, price, cat, desc, img: currentImage };
-            db.unshift(product);
-            localStorage.setItem('cosme_2026_db', JSON.stringify(db));
+        // --- GESTION PRODUITS ---
+        function renderCategories() {
+            const cats = ['Tout', ...new Set(db.map(p => p.cat))];
+            const list = document.getElementById('cats-list');
+            list.innerHTML = cats.map(c => `<option value="${c}">`).join('');
             
-            alert("Article publié avec succès !");
-            location.reload(); // Rafraîchir pour voir les changements
+            document.getElementById('categoryContainer').innerHTML = cats.map(c => `
+                <button onclick="setFilter('${c}', this)" class="px-6 py-3 rounded-2xl border text-xs font-black whitespace-nowrap transition-all ${filterCat === c ? 'bg-black text-white border-black scale-105 shadow-lg' : 'bg-white text-gray-400 border-gray-100 hover:border-yellow-200'}">
+                    ${c.toUpperCase()}
+                </button>
+            `).join('');
         }
 
-        function render() {
+        function renderProducts() {
             const grid = document.getElementById('productGrid');
             const search = document.getElementById('searchInput').value.toLowerCase();
-            grid.innerHTML = "";
+            grid.className = viewMode === 'grid' ? 'px-4 grid grid-cols-2 gap-4' : 'px-4 flex flex-col gap-6';
+            grid.innerHTML = '';
 
-            db.filter(p => p.name.toLowerCase().includes(search)).forEach(p => {
+            const filtered = db.filter(p => (filterCat === 'Tout' || p.cat === filterCat) && p.name.toLowerCase().includes(search));
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-2 py-20 text-center opacity-30"><i class="fas fa-search text-5xl mb-4"></i><p class="font-bold">Aucun résultat trouvé...</p></div>`;
+                return;
+            }
+
+            filtered.forEach((p, idx) => {
+                const isEpuise = p.stock === 0;
                 grid.innerHTML += `
-                    <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col animate__animated animate__fadeIn">
-                        <img src="${p.img}" class="w-full h-40 object-cover">
-                        <div class="p-3 flex flex-col flex-grow">
-                            <h3 class="font-bold text-xs h-8 overflow-hidden">${p.name}</h3>
-                            <p class="text-yellow-700 font-bold mt-2">${p.price} FCFA</p>
-                            <button onclick="addToCart(${p.id})" class="mt-3 bg-black text-white py-2 rounded-xl text-[10px] font-bold active:scale-95 transition">AJOUTER</button>
+                    <div class="reveal product-card bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-50 flex flex-col relative transition-all active:scale-95" style="transition-delay: ${idx * 0.05}s">
+                        <div class="relative overflow-hidden cursor-pointer" onclick="openDetail(${p.id})">
+                            <img src="${p.photos[0]}" loading="lazy" class="w-full ${viewMode === 'grid' ? 'h-48' : 'h-72'} object-cover transition-transform duration-700 hover:scale-110 ${isEpuise ? 'grayscale opacity-30' : ''}">
+                            ${p.oldPrice ? `<span class="absolute top-4 left-4 bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-full animate-pulse shadow-lg">PROMO</span>` : ''}
+                            ${isEpuise ? `<div class="absolute inset-0 bg-white/40 flex items-center justify-center font-black text-red-600 text-xs tracking-widest uppercase">ÉPUISÉ</div>` : ''}
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <span class="text-[8px] font-black text-yellow-600 uppercase tracking-widest mb-1">${p.cat}</span>
+                            <h3 class="font-bold text-xs text-gray-800 leading-tight line-clamp-1 mb-2">${p.name}</h3>
+                            <div class="flex items-baseline gap-2 mt-auto">
+                                <span class="font-black text-sm text-black">${p.price} FCFA</span>
+                                ${p.oldPrice ? `<span class="text-[10px] text-gray-300 line-through">${p.oldPrice}</span>` : ''}
+                            </div>
+                            <button onclick="addToCart(${p.id}, event)" ${isEpuise ? 'disabled' : ''} class="mt-4 w-full bg-black text-white py-3.5 rounded-2xl text-[9px] font-black tracking-widest transition shadow-md active:bg-yellow-600 ${isEpuise ? 'opacity-20 pointer-events-none' : ''}">
+                                AJOUTER AU PANIER
+                            </button>
                         </div>
                     </div>
                 `;
             });
-            renderAdminList();
+            setTimeout(setupObserver, 100);
         }
 
-        function renderAdminList() {
-            const list = document.getElementById('adminList');
-            list.innerHTML = db.map(p => `
-                <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-xl border">
-                    <img src="${p.img}" class="w-10 h-10 object-cover rounded-lg">
-                    <div class="flex-grow text-[10px] font-bold">${p.name}</div>
-                    <button onclick="deleteProduct(${p.id})" class="text-red-500 p-2"><i class="fas fa-trash"></i></button>
+        // --- GESTION PHOTO (COMPRESSION CANVAS) ---
+        async function handlePhotos(e) {
+            const files = Array.from(e.target.files);
+            if(currentPhotos.length + files.length > 5) return alert("Max 5 photos !");
+            
+            for(let file of files) {
+                const base64 = await compressImage(file);
+                currentPhotos.push(base64);
+            }
+            renderPhotoPreviews();
+        }
+
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.src = ev.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_SIZE = 600;
+                        let w = img.width, h = img.height;
+                        if(w > h) { if(w > MAX_SIZE) { h *= MAX_SIZE/w; w = MAX_SIZE; } }
+                        else { if(h > MAX_SIZE) { w *= MAX_SIZE/h; h = MAX_SIZE; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    }
+                }
+            });
+        }
+
+        function renderPhotoPreviews() {
+            const container = document.getElementById('photoPreviews');
+            container.innerHTML = currentPhotos.map((p, i) => `
+                <div class="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
+                    <img src="${p}" class="w-full h-full object-cover">
+                    <button onclick="currentPhotos.splice(${i},1); renderPhotoPreviews();" class="absolute top-1 right-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full">&times;</button>
                 </div>
             `).join('');
         }
 
-        function deleteProduct(id) {
-            if(confirm("Supprimer cet article ?")) {
-                db = db.filter(p => p.id !== id);
-                localStorage.setItem('cosme_2026_db', JSON.stringify(db));
-                render();
-            }
-        }
-
         // --- GESTION PANIER ---
-        function addToCart(id) {
+        function addToCart(id, e) {
+            e.stopPropagation();
             const p = db.find(x => x.id === id);
-            cart.push(p);
+            const inCart = cart.find(x => x.id === id);
+            if(inCart) inCart.qty++; else cart.push({...p, qty: 1});
+            
+            const btn = e.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = "AJOUTÉ ✅";
+            btn.classList.replace('bg-black', 'bg-green-600');
+            setTimeout(() => { btn.innerText = originalText; btn.classList.replace('bg-green-600', 'bg-black'); }, 1500);
+            
+            const badge = document.getElementById('cart-badge');
+            badge.innerText = cart.reduce((a, b) => a + b.qty, 0);
+            badge.classList.remove('hidden');
+            badge.classList.add('animate__bounceIn');
+            setTimeout(() => badge.classList.remove('animate__bounceIn'), 500);
             updateCart();
         }
 
         function updateCart() {
-            const total = cart.reduce((acc, p) => acc + parseInt(p.price), 0);
-            document.getElementById('totalPrice').innerText = total + " FCFA";
+            const container = document.getElementById('cartContent');
+            const totalEl = document.getElementById('cartTotal');
+            let total = 0;
+            container.innerHTML = cart.map((item, idx) => {
+                total += item.price * item.qty;
+                return `
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-50 animate__animated animate__fadeIn">
+                        <img src="${item.photos[0]}" class="w-20 h-20 rounded-2xl object-cover">
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-[11px] leading-tight mb-1 uppercase">${item.name}</h4>
+                            <p class="text-xs text-yellow-700 font-black">${item.price} FCFA</p>
+                            <div class="flex items-center gap-3 mt-2 bg-gray-50 w-fit px-3 py-1 rounded-full">
+                                <button onclick="changeQty(${idx}, -1)" class="text-gray-400"><i class="fas fa-minus text-[10px]"></i></button>
+                                <span class="text-xs font-black">${item.qty}</span>
+                                <button onclick="changeQty(${idx}, 1)" class="text-yellow-600"><i class="fas fa-plus text-[10px]"></i></button>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${idx})" class="text-red-200 hover:text-red-600 transition-colors"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+            }).join('');
+            if(cart.length === 0) container.innerHTML = `<div class="text-center py-20 opacity-20"><i class="fas fa-shopping-bag text-7xl mb-4"></i><p class="font-bold">Votre panier attend des pépites...</p></div>`;
+            totalEl.innerText = total.toLocaleString() + " FCFA";
         }
+
+        function changeQty(idx, delta) { cart[idx].qty += delta; if(cart[idx].qty < 1) cart.splice(idx, 1); updateCart(); }
+        function removeFromCart(idx) { cart.splice(idx, 1); updateCart(); }
 
         function sendOrder() {
-            if(cart.length === 0) return alert("Le panier est vide !");
-            let msg = `*COMMANDE COSMETIQUE SERVICES*%0A%0A`;
-            cart.forEach(p => msg += `• ${p.name} (${p.price} FCFA)%0A`);
-            msg += `%0A*TOTAL : ${document.getElementById('totalPrice').innerText}*`;
+            if(cart.length === 0) return;
+            let msg = `*COSMETIQUE SERVICES COMMANDE*%0A📍 _Ngallèle, Saint-Louis_%0A--------------------------------%0A`;
+            let total = 0;
+            cart.forEach(i => { msg += `• *${i.qty}x* ${i.name} _(${i.price * i.qty} FCFA)_%0A`; total += i.price * i.qty; });
+            msg += `--------------------------------%0A*TOTAL : ${total} FCFA*%0A%0A_Veuillez confirmer ma commande._`;
             window.open(`https://wa.me/221778165450?text=${msg}`, '_blank');
+            cart = []; updateCart(); toggleCart();
+            alert("COMMANDE ENVOYÉE ! ✨");
         }
 
-        function openAdmin() { document.getElementById('adminPanel').style.display = 'block'; }
-        function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+        // --- GESTION DÉTAIL / GALERIE ---
+        function openDetail(id) {
+            const p = db.find(x => x.id === id);
+            currentGalleryIndex = 0;
+            const modal = document.getElementById('detailModal');
+            const track = document.getElementById('galleryTrack');
+            const dots = document.getElementById('galleryDots');
+            
+            track.innerHTML = p.photos.map(src => `<div class="w-screen h-full flex-shrink-0"><img src="${src}" class="w-full h-full object-cover"></div>`).join('');
+            dots.innerHTML = p.photos.map((_, i) => `<div class="gallery-dot h-2 w-2 rounded-full bg-white/30 transition-all ${i === 0 ? 'active' : ''}"></div>`).join('');
+            
+            document.getElementById('detailBody').innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-black text-yellow-600 uppercase tracking-widest">${p.cat}</span>
+                        <h2 class="text-3xl font-luxury mt-2 leading-tight">${p.name}</h2>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-black text-black">${p.price} FCFA</p>
+                        ${p.oldPrice ? `<p class="text-xs text-gray-300 line-through">${p.oldPrice} FCFA</p>` : ''}
+                    </div>
+                </div>
+                <div class="mt-8 space-y-4">
+                    <h3 class="text-xs font-black uppercase text-gray-400">Description</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">${p.desc || 'Ce produit est soigneusement sélectionné par Cosmetique Services pour sublimer votre beauté naturelle. Qualité premium garantie à Ngallèle.'}</p>
+                </div>
+                <div class="flex gap-4 mt-10">
+                    <button onclick="addToCart(${p.id}, event); closeDetail();" class="flex-grow bg-black text-white py-5 rounded-3xl font-black tracking-widest shadow-2xl active:scale-95 transition">AJOUTER AU PANIER</button>
+                    <a href="https://wa.me/221778165450?text=Bonjour, je souhaite des infos sur : ${p.name}" class="bg-green-50 w-20 flex items-center justify-center rounded-3xl text-green-600 text-2xl"><i class="fab fa-whatsapp"></i></a>
+                </div>
+                <div class="grid grid-cols-5 gap-2 mt-8 opacity-50">
+                    ${p.photos.map(s => `<img src="${s}" class="w-full aspect-square object-cover rounded-xl border">`).join('')}
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            setupSwipe();
+        }
 
-        render();
+        function closeDetail() { document.getElementById('detailModal').classList.add('hidden'); }
+
+        function setupSwipe() {
+            const track = document.getElementById('galleryTrack');
+            let startX = 0;
+            track.addEventListener('touchstart', (e) => startX = e.touches[0].clientX, {passive: true});
+            track.addEventListener('touchend', (e) => {
+                const diff = startX - e.changedTouches[0].clientX;
+                const p = db.find(x => x.photos.includes(track.querySelector('img').src));
+                if(Math.abs(diff) > 50) {
+                    if(diff > 0 && currentGalleryIndex < track.children.length - 1) currentGalleryIndex++;
+                    else if(diff < 0 && currentGalleryIndex > 0) currentGalleryIndex--;
+                    track.style.transform = `translateX(-${currentGalleryIndex * 100}vw)`;
+                    updateDots();
+                }
+            }, {passive: true});
+        }
+
+        function updateDots() {
+            document.querySelectorAll('.gallery-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentGalleryIndex);
+            });
+        }
+
+        // --- GESTION ADMIN ---
+        function openAdmin() { document.getElementById('adminPanel').classList.remove('hidden'); }
+        function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
+        
+        async function verifyAdmin() {
+            const pass = document.getElementById('adminPass').value;
+            // SHA-256 Simple (Simulé pour 2026)
+            if(pass === '2026') {
+                document.getElementById('adminLogin').classList.add('hidden');
+                document.getElementById('adminControls').classList.remove('hidden');
+                renderAdminList();
+                renderCategories();
+            } else { alert("Code incorrect !"); }
+        }
+
+        function handleSave(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const data = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('pName').value,
+                price: parseInt(document.getElementById('pPrice').value),
+                oldPrice: parseInt(document.getElementById('pOld').value) || null,
+                cat: document.getElementById('pCat').value,
+                desc: document.getElementById('pDesc').value,
+                photos: [...currentPhotos],
+                stock: 1 // 1=dispo, 0=épuisé
+            };
+
+            if(currentPhotos.length === 0) return alert("Photo obligatoire !");
+
+            if(id) {
+                const idx = db.findIndex(p => p.id === parseInt(id));
+                db[idx] = data;
+            } else {
+                db.unshift(data);
+            }
+
+            localStorage.setItem('cosme_2026_db', JSON.stringify(db));
+            alert("Publié !");
+            location.reload();
+        }
+
+        function renderAdminList() {
+            document.getElementById('adminList').innerHTML = db.map(p => `
+                <div class="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
+                    <img src="${p.photos[0]}" class="w-12 h-12 rounded-xl object-cover">
+                    <div class="flex-grow">
+                        <h4 class="text-[10px] font-black uppercase line-clamp-1">${p.name}</h4>
+                        <p class="text-xs font-bold text-yellow-700">${p.price} FCFA</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="toggleStock(${p.id})" class="w-8 h-8 rounded-full ${p.stock === 1 ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'} flex items-center justify-center text-[10px]"><i class="fas fa-box"></i></button>
+                        <button onclick="editProduct(${p.id})" class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-[10px]"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct(${p.id})" class="w-8 h-8 rounded-full bg-gray-50 text-gray-300 flex items-center justify-center text-[10px]"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleStock(id) {
+            const p = db.find(x => x.id === id);
+            p.stock = p.stock === 1 ? 0 : 1;
+            localStorage.setItem('cosme_2026_db', JSON.stringify(db));
+            renderAdminList(); renderProducts();
+        }
+
+        function deleteProduct(id) { if(confirm("Supprimer ?")) { db = db.filter(p => p.id !== id); localStorage.setItem('cosme_2026_db', JSON.stringify(db)); renderAdminList(); renderProducts(); } }
+
+        function editProduct(id) {
+            const p = db.find(x => x.id === id);
+            document.getElementById('editId').value = p.id;
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pPrice').value = p.price;
+            document.getElementById('pOld').value = p.oldPrice || '';
+            document.getElementById('pCat').value = p.cat;
+            document.getElementById('pDesc').value = p.desc || '';
+            currentPhotos = [...p.photos];
+            renderPhotoPreviews();
+            window.scrollTo({top: 0, behavior:'smooth'});
+        }
+
+        // --- UI HELPERS ---
+        function setFilter(c, btn) {
+            filterCat = c;
+            renderCategories();
+            renderProducts();
+            window.scrollTo({top: 200, behavior:'smooth'});
+        }
+
+        function toggleView() {
+            viewMode = viewMode === 'grid' ? 'list' : 'grid';
+            document.getElementById('view-icon').className = viewMode === 'grid' ? 'fas fa-th-large' : 'fas fa-list';
+            renderProducts();
+        }
+
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('open');
+            document.getElementById('cartOverlay').classList.toggle('hidden');
+            updateCart();
+        }
+
+        function changeTab(tab, btn) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.replace('text-yellow-600', 'text-gray-400'));
+            btn.classList.replace('text-gray-400', 'text-yellow-600');
+            const rect = btn.getBoundingClientRect();
+            document.getElementById('navIndicator').style.left = (rect.left + rect.width/2 - 24) + 'px';
+            if(tab === 'accueil') { filterCat = 'Tout'; renderProducts(); }
+        }
+
+        function setupObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('active'); });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal').forEach(r => observer.observe(r));
+        }
+
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(db)], {type: "application/json"});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `cosmetique_cs_${Date.now()}.json`; a.click();
+        }
+
+        function importJSON(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                db = JSON.parse(ev.target.result);
+                localStorage.setItem('cosme_2026_db', JSON.stringify(db));
+                location.reload();
+            };
+            reader.readAsText(e.target.files[0]);
+        }
     </script>
 </body>
 </html>
