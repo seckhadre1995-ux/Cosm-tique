@@ -3,43 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmétique Services | Saint-Louis</title>
+    <title>Cosmétique Services | Marketplace de Luxe</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- SDK FIREBASE -->
+    <!-- SDK FIREBASE 10.8+ -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-      import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+      import { getDatabase, ref, onValue, push, remove, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+      import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyBhCAp0R6b4QH0fKjFWZiF4fboAQwWcp9I",
         authDomain: "cosmetiqueservices.firebaseapp.com",
         databaseURL: "https://cosmetiqueservices-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "cosmetiqueservices",
-        storageBucket: "cosmetiqueservices.firebasestorage.app",
+        storageBucket: "cosmetiqueservices.appspot.com",
         messagingSenderId: "838206036615",
         appId: "1:838206036615:web:ef9b5e78f882cdfb3b3622"
       };
 
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
-      window.dbRef = ref(db, 'produits');
-      
-      // API Globales
-      window.apiSave = (data) => push(window.dbRef, data);
-      window.apiUpdate = (id, data) => set(ref(db, 'produits/' + id), data);
-      window.apiDelete = (id) => remove(ref(db, 'produits/' + id));
+      const storage = getStorage(app);
 
+      // Exportation pour usage global
+      window.db = db;
+      window.storage = storage;
+      window.dbRef = ref(db, 'produits');
+
+      // Chargement initial
       onValue(window.dbRef, (snapshot) => {
         const data = snapshot.val();
         window.allProducts = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
+        updateStats();
         renderItems();
         renderChips();
-        if(document.getElementById('adminTools').classList.contains('hidden') === false) renderAdminList();
+        if(window.isGérantMode) renderAdminList();
       });
     </script>
 
@@ -48,317 +51,570 @@
             darkMode: 'class',
             theme: { 
                 extend: { 
-                    colors: { gold: '#D4AF37', deep: '#0A0A0A', luxury: '#1a1a1a' },
-                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'] }
+                    colors: { gold: '#C5A059', deep: '#050505', premium: '#111111', accent: '#F4F1ED' },
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], serif: ['Playfair Display', 'serif'] }
                 } 
             }
         }
     </script>
     
     <style>
-        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        :root { --gold: #C5A059; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Glassmorphism */
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
         .dark .glass { background: rgba(10, 10, 10, 0.8); }
         
-        .gold-gradient { background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C); }
-        .gold-text { background: linear-gradient(135deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        /* Animations Custom */
+        .splash-active { opacity: 1; z-index: 10000; }
+        .splash-done { opacity: 0; pointer-events: none; transition: 1s ease-in-out; }
         
-        .product-card { transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .product-card:hover { transform: translateY(-10px); }
-        
-        #splash { background: radial-gradient(circle, #1a1a1a 0%, #000 100%); transition: 1s ease-in-out; }
-        .splash-hide { opacity: 0; pointer-events: none; transform: scale(1.2); }
+        .gold-gradient { background: linear-gradient(135deg, #C5A059, #F9F295, #C5A059); }
+        .gold-text { background: linear-gradient(135deg, #C5A059, #F9F295, #B38728); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
+        /* Loader Premium */
+        .loader-ring { width: 80px; height: 80px; border: 2px solid #C5A05933; border-radius: 50%; border-top-color: #C5A059; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         
-        .badge-new { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+        /* Card Hover */
+        .p-card { transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .p-card:hover { transform: translateY(-8px); shadow: 0 20px 40px rgba(0,0,0,0.1); }
     </style>
 </head>
 
-<body class="bg-[#FDFDFD] dark:bg-deep text-luxury dark:text-gray-100 transition-colors duration-500 pb-32">
+<body class="bg-[#F8F9FA] dark:bg-deep text-premium dark:text-gray-100 transition-colors duration-500 overflow-x-hidden pb-32">
 
-    <!-- 1. SPLASH SCREEN LUXE -->
-    <div id="splash" class="fixed inset-0 z-[10000] flex flex-col items-center justify-center">
-        <div class="relative">
-            <div class="w-24 h-24 border-2 border-gold rounded-full animate-spin-slow flex items-center justify-center">
-                <span class="text-gold font-serif text-3xl font-bold tracking-tighter">CS</span>
-            </div>
-            <div class="absolute inset-0 w-24 h-24 border-t-2 border-white rounded-full animate-spin"></div>
+    <!-- 1. SPLASH SCREEN PREMIUM -->
+    <div id="splash" class="fixed inset-0 splash-active bg-black flex flex-col items-center justify-center transition-all duration-1000">
+        <div class="relative mb-8">
+            <div class="loader-ring"></div>
+            <div class="absolute inset-0 flex items-center justify-center font-serif text-2xl text-gold font-bold">CS</div>
         </div>
-        <h1 id="typewriter" class="mt-8 font-serif text-2xl gold-text tracking-[0.3em] uppercase"></h1>
+        <h1 id="splashText" class="text-white font-serif text-2xl tracking-[0.3em] font-bold opacity-0 transition-opacity duration-700">COSMÉTIQUE SERVICES</h1>
     </div>
 
-    <!-- NOTIFICATION -->
-    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 z-[11000] glass px-6 py-3 rounded-2xl shadow-2xl opacity-0 transition-all duration-500 translate-y-[-20px] flex items-center gap-3">
-        <div class="w-2 h-2 bg-gold rounded-full"></div>
-        <span class="text-[10px] font-bold uppercase tracking-widest text-black dark:text-white"></span>
+    <!-- TOAST & CONFIRM MODAL -->
+    <div id="toast" class="fixed top-12 left-1/2 -translate-x-1/2 z-[11000] glass px-8 py-4 rounded-3xl shadow-2xl opacity-0 transition-all duration-500 translate-y-[-50px] flex items-center gap-3 border border-gold/20">
+        <div id="toastIcon" class="text-gold"></div>
+        <span id="toastMsg" class="text-[11px] font-bold uppercase tracking-widest"></span>
     </div>
 
-    <!-- SMART NAVBAR -->
+    <div id="confirmModal" class="fixed inset-0 z-[12000] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-6">
+        <div class="bg-white dark:bg-premium p-8 rounded-[2.5rem] w-full max-w-sm text-center animate__animated animate__zoomIn">
+            <h3 class="text-xl font-bold mb-4 font-serif" id="confirmTitle">Confirmation</h3>
+            <p class="text-xs opacity-60 mb-8" id="confirmDesc"></p>
+            <div class="flex gap-4">
+                <button onclick="closeConfirm(false)" class="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-white/5 font-bold text-[10px] uppercase">Annuler</button>
+                <button id="confirmBtn" class="flex-1 py-4 rounded-2xl gold-gradient text-black font-bold text-[10px] uppercase shadow-lg shadow-gold/20">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. NAVIGATION SMART -->
     <header id="smartNav" class="fixed top-0 inset-x-0 z-[90] glass border-b border-gray-100 dark:border-white/5 transition-transform duration-500">
-        <div class="max-w-6xl mx-auto px-5 py-4">
-            <div class="flex justify-between items-center mb-4">
+        <div class="max-w-6xl mx-auto px-6 py-5">
+            <div class="flex justify-between items-center mb-6">
                 <div class="flex flex-col">
-                    <h1 class="font-serif text-xl font-black tracking-tighter leading-none uppercase">Cosmétique <span class="gold-text italic">Services</span></h1>
-                    <p class="text-[7px] uppercase tracking-[0.4em] opacity-50 font-bold">L'Excellence à Saint-Louis</p>
+                    <h1 class="font-serif text-2xl font-black tracking-tight leading-none">CS <span class="gold-text italic">SHOP</span></h1>
+                    <p class="text-[8px] uppercase tracking-[0.4em] opacity-40 font-extrabold mt-1">Marketplace Premium</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleDark()" class="text-xl p-2"><i class="fas fa-adjust"></i></button>
-                    <div class="relative" onclick="openCart()">
-                        <i class="fas fa-shopping-cart text-xl"></i>
-                        <span id="cartBadge" class="absolute -top-2 -right-2 bg-gold text-deep text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-deep hidden">0</span>
+                    <button onclick="toggleTheme()" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                        <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:block text-gold"></i>
+                    </button>
+                    <div class="relative cursor-pointer" onclick="openCart()">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-deep hidden animate__animated animate__bounceIn">0</span>
                     </div>
                 </div>
             </div>
             
-            <div class="relative group">
-                <input type="text" id="searchInput" oninput="renderItems()" placeholder="Rechercher un parfum, un soin..." class="w-full bg-gray-100 dark:bg-white/5 border-none rounded-2xl py-3.5 pl-12 pr-4 text-xs font-medium focus:ring-2 ring-gold/20 transition-all outline-none">
-                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gold transition-colors"></i>
+            <div class="flex gap-3">
+                <div class="relative flex-grow">
+                    <input type="text" id="searchInput" oninput="renderItems()" placeholder="Rechercher une pépite..." class="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl py-4 pl-12 pr-4 text-[11px] font-semibold focus:ring-2 ring-gold/20 transition-all outline-none">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <select id="sortSelect" onchange="renderItems()" class="bg-gray-50 dark:bg-white/5 rounded-2xl px-4 text-[10px] font-bold border-none focus:ring-2 ring-gold/20 outline-none">
+                    <option value="new">Nouveautés</option>
+                    <option value="price-asc">Prix Croissant</option>
+                    <option value="price-desc">Prix Décroissant</option>
+                    <option value="promo">Promotions</option>
+                    <option value="pop">Populaires</option>
+                </select>
             </div>
         </div>
-
-        <!-- Catégories Animées -->
-        <div id="catBar" class="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-4"></div>
+        <div id="catBar" class="flex gap-3 overflow-x-auto no-scrollbar px-6 pb-5"></div>
     </header>
 
-    <!-- HERO SECTION MODERNE AVEC TA PHOTO -->
-    <section class="mt-48 px-5 max-w-6xl mx-auto">
-        <div class="relative h-72 rounded-[2.5rem] overflow-hidden shadow-2xl group border border-gold/20">
-            <img src="input_file_0.jpeg" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[10s]">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex flex-col justify-end p-8">
-                <span class="bg-gold text-white text-[8px] font-black px-3 py-1 rounded-full w-fit mb-3 uppercase tracking-widest badge-new">Votre Boutique</span>
-                <h2 class="text-white text-3xl font-serif font-bold leading-tight">La Beauté à<br><span class="gold-text italic">Saint-Louis</span></h2>
-            </div>
-        </div>
+    <!-- 3. HERO SECTION (TEXTE SEULEMENT) -->
+    <section class="mt-52 px-6 max-w-6xl mx-auto text-center py-12">
+        <h2 class="font-serif text-4xl md:text-6xl font-black mb-4 leading-tight animate__animated animate__fadeInUp">
+            Découvrez l'Excellence<br><span class="gold-text italic">à Saint-Louis</span>
+        </h2>
+        <p class="text-xs md:text-sm opacity-40 uppercase tracking-[0.5em] font-bold animate__animated animate__fadeInUp animate__delay-1s">Cosmétique • Mode • Tech • Luxe</p>
     </section>
 
-    <!-- DASHBOARD STATS (Admin Only) -->
-    <div id="adminStats" class="hidden px-5 mt-8 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
-        <div class="bg-gold/10 p-4 rounded-3xl border border-gold/20">
-            <p class="text-[8px] uppercase font-bold opacity-60">Total Produits</p>
-            <p id="statCount" class="text-2xl font-black text-gold">0</p>
-        </div>
-        <div class="bg-black/5 dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/10">
-            <p class="text-[8px] uppercase font-bold opacity-60">Valeur Stock</p>
-            <p id="statValue" class="text-2xl font-black tracking-tighter">0 <span class="text-xs">FCFA</span></p>
-        </div>
-    </div>
+    <!-- 4. GRILLE PRODUITS -->
+    <main id="itemGrid" class="px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-20 min-h-[400px]">
+        <!-- Skeleton Loaders ici si besoin -->
+    </main>
 
-    <!-- GRILLE PRODUITS -->
-    <main id="itemGrid" class="px-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-10 max-w-6xl mx-auto mb-20"></main>
-
-    <!-- NAVIGATION BAS DE PAGE -->
-    <nav class="fixed bottom-6 inset-x-5 h-20 glass rounded-[2.5rem] z-[100] flex justify-around items-center px-4 shadow-2xl border border-white/20">
-        <button onclick="changeTab('home')" id="btn-home" class="flex flex-col items-center gap-1 text-gold"><i class="fas fa-home text-xl"></i><span class="text-[8px] uppercase font-bold">Boutique</span></button>
-        <button onclick="changeTab('wish')" id="btn-wish" class="flex flex-col items-center gap-1 text-gray-400 relative"><i class="fas fa-heart text-xl"></i><span id="wishCount" class="absolute -top-1 -right-2 bg-red-500 text-white text-[7px] w-4 h-4 rounded-full hidden flex items-center justify-center font-black">0</span><span class="text-[8px] uppercase font-bold">Favoris</span></button>
-        <button onclick="openCart()" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-shopping-bag text-xl"></i><span class="text-[8px] uppercase font-bold">Panier</span></button>
-        <button onclick="openAdmin()" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-crown text-xl"></i><span class="text-[8px] uppercase font-bold">Gérant</span></button>
+    <!-- 5. NAVIGATION BAS DE PAGE -->
+    <nav class="fixed bottom-8 inset-x-6 h-20 glass rounded-[2.5rem] z-[100] flex justify-around items-center px-4 shadow-2xl border border-white/20">
+        <button onclick="changeTab('home')" id="nav-home" class="flex flex-col items-center gap-1 text-gold transition-all duration-300">
+            <i class="fas fa-house-chimney text-lg"></i>
+            <span class="text-[8px] uppercase font-black">Boutique</span>
+        </button>
+        <button onclick="changeTab('wish')" id="nav-wish" class="flex flex-col items-center gap-1 text-gray-400 relative transition-all duration-300">
+            <i class="fas fa-heart text-lg"></i>
+            <span id="wishCount" class="absolute -top-1 -right-2 bg-gold text-deep text-[7px] w-4 h-4 rounded-full hidden flex items-center justify-center font-black">0</span>
+            <span class="text-[8px] uppercase font-black">Favoris</span>
+        </button>
+        <button onclick="openCart()" class="flex flex-col items-center gap-1 text-gray-400 transition-all duration-300">
+            <i class="fas fa-bag-shopping text-lg"></i>
+            <span class="text-[8px] uppercase font-black">Panier</span>
+        </button>
+        <button onclick="openAdmin()" id="nav-admin" class="flex flex-col items-center gap-1 text-gray-400 transition-all duration-300">
+            <i class="fas fa-crown text-lg"></i>
+            <span class="text-[8px] uppercase font-black">Gérant</span>
+        </button>
     </nav>
 
-    <!-- PANIER DRAWER -->
-    <div id="cartOverlay" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-sm" onclick="closeCart()"></div>
-    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#0A0A0A] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl rounded-l-[3rem] overflow-hidden">
-        <div class="p-8 border-b dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-black">
+    <!-- 6. PANIER DRAWER -->
+    <div id="cartOverlay" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-md" onclick="closeCart()"></div>
+    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#080808] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl rounded-l-[3rem] overflow-hidden">
+        <div class="p-8 border-b dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-black/20">
             <div>
-                <h2 class="text-xl font-serif font-black uppercase tracking-widest">Mon Panier</h2>
-                <p class="text-[9px] opacity-50 uppercase tracking-tighter">Cosmétique Services</p>
+                <h2 class="text-2xl font-serif font-black uppercase tracking-wider">Votre Panier</h2>
+                <p class="text-[9px] opacity-40 uppercase font-black">Finalisez votre commande</p>
             </div>
-            <button onclick="closeCart()" class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-xl">&times;</button>
+            <button onclick="closeCart()" class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-xl">&times;</button>
         </div>
-        <div id="cartItems" class="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar"></div>
-        <div class="p-8 space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="text" id="clientName" placeholder="Votre Nom" class="p-4 rounded-2xl border dark:border-white/10 outline-none text-xs bg-gray-50 dark:bg-white/5 font-bold">
-                <input type="text" id="clientArea" placeholder="Quartier" class="p-4 rounded-2xl border dark:border-white/10 outline-none text-xs bg-gray-50 dark:bg-white/5 font-bold">
+        <div id="cartItems" class="flex-grow overflow-y-auto p-8 space-y-6 no-scrollbar"></div>
+        <div class="p-8 space-y-6 glass border-t dark:border-white/5">
+            <div class="space-y-3">
+                <input type="text" id="clientName" placeholder="Nom complet" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-[11px] font-bold outline-none ring-1 ring-black/5 dark:ring-white/5 focus:ring-gold/50">
+                <input type="text" id="clientArea" placeholder="Quartier de livraison" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-[11px] font-bold outline-none ring-1 ring-black/5 dark:ring-white/5 focus:ring-gold/50">
             </div>
-            <div class="flex justify-between items-center py-4 border-t dark:border-white/10">
-                <span class="font-bold text-xs uppercase opacity-50">Total à payer</span>
+            <div class="flex justify-between items-center py-4">
+                <span class="font-bold text-[10px] uppercase opacity-40 tracking-widest">Sous-total</span>
                 <span id="cartTotal" class="text-2xl font-black gold-text">0 FCFA</span>
             </div>
-            <button onclick="sendOrder()" class="w-full gold-gradient text-deep py-5 rounded-[2rem] font-black shadow-xl text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">Commander via WhatsApp</button>
+            <button onclick="sendOrder()" class="w-full gold-gradient text-black py-5 rounded-3xl font-black shadow-xl text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">Commander via WhatsApp</button>
         </div>
     </aside>
 
-    <!-- ADMIN PANEL -->
-    <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-deep p-6 overflow-y-auto no-scrollbar animate__animated animate__fadeInUp">
-        <div class="flex justify-between items-center mb-10 max-w-2xl mx-auto">
-            <h2 class="text-2xl font-serif gold-text uppercase">Espace Gestion</h2>
-            <button onclick="closeAdmin()" class="w-12 h-12 flex items-center justify-center text-3xl">&times;</button>
-        </div>
-        
-        <div id="adminAuth" class="max-w-xs mx-auto text-center py-20">
-            <p class="text-[10px] uppercase tracking-widest mb-4 opacity-50">Code d'accès requis</p>
-            <input type="password" id="adminPass" class="w-full bg-transparent border-b-2 border-gold p-4 text-center text-3xl outline-none mb-10 font-bold" placeholder="****">
-            <button onclick="verifyAdmin()" class="w-full gold-gradient text-black py-4 rounded-full font-black uppercase text-xs">Se connecter</button>
-        </div>
-
-        <div id="adminTools" class="hidden max-w-2xl mx-auto space-y-10 pb-40">
-            <form id="saveForm" class="bg-gray-50 dark:bg-white/5 p-8 rounded-[3rem] space-y-5 border border-gray-100 dark:border-white/5 shadow-inner" onsubmit="handleSave(event)">
-                <input type="hidden" id="editId">
-                <div class="flex gap-4 items-center">
-                    <label class="w-24 h-24 border-2 border-dashed border-gold/30 flex flex-col items-center justify-center rounded-3xl cursor-pointer hover:bg-gold/5">
-                        <i class="fas fa-camera text-gold mb-1"></i>
-                        <span class="text-[8px] font-bold uppercase text-gold">Photo</span>
-                        <input type="file" accept="image/*" onchange="handlePhoto(event)" class="hidden">
-                    </label>
-                    <div id="photoPreview" class="flex-grow h-24 rounded-3xl overflow-hidden bg-black/10"></div>
+    <!-- 7. ESPACE GÉRANT (FULL REDESIGN) -->
+    <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-deep p-6 overflow-y-auto no-scrollbar animate__animated animate__fadeIn">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-12">
+                <h2 class="text-3xl font-serif font-black gold-text">CONTROL CENTER</h2>
+                <button onclick="closeAdmin()" class="w-12 h-12 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-2xl">&times;</button>
+            </div>
+            
+            <div id="adminAuth" class="max-w-xs mx-auto text-center py-20">
+                <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <i class="fas fa-shield-halved text-gold text-2xl"></i>
                 </div>
+                <p class="text-[10px] uppercase tracking-[0.3em] font-black mb-6 opacity-40">Authentification Gérant</p>
+                <input type="password" id="adminPass" class="w-full bg-transparent border-b-2 border-gold/30 p-4 text-center text-3xl outline-none mb-10 font-black tracking-widest focus:border-gold transition-all" placeholder="••••">
+                <button onclick="verifyAdmin()" class="w-full gold-gradient text-black py-5 rounded-3xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-gold/20">Se Connecter</button>
+            </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="pName" placeholder="Nom du produit" class="col-span-2 p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm" required>
-                    <input type="number" id="pPrice" placeholder="Prix (FCFA)" class="p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm" required>
-                    <input type="number" id="pPromo" placeholder="Ancien prix (Optionnel)" class="p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm">
-                    <select id="pCat" class="col-span-2 p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm">
-                        <option value="✨ Cosmétique">✨ Cosmétique & Soins</option>
-                        <option value="🌸 Parfums">🌸 Parfumerie de Luxe</option>
-                        <option value="👜 Sacs">👜 Maroquinerie / Sacs</option>
-                        <option value="👠 Mode">👠 Chaussures & Mode</option>
-                        <option value="⚡ Accessoires">⚡ Accessoires</option>
-                        <option value="➕ Autre">➕ Autre catégorie</option>
-                    </select>
-                    <div class="col-span-2 flex items-center gap-2 p-2">
-                        <label class="text-[10px] uppercase font-bold opacity-60">En stock ?</label>
-                        <input type="checkbox" id="pStock" checked class="w-5 h-5 accent-gold">
+            <div id="adminTools" class="hidden space-y-12 pb-40">
+                <!-- Dashboard Stats Premium -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 dark:bg-white/5 p-6 rounded-[2rem] border border-black/5 dark:border-white/5">
+                        <p class="text-[8px] uppercase font-black opacity-40 mb-2">Total Articles</p>
+                        <p id="statTotal" class="text-2xl font-black">0</p>
+                    </div>
+                    <div class="bg-gold/5 p-6 rounded-[2rem] border border-gold/20">
+                        <p class="text-[8px] uppercase font-black text-gold mb-2">Valeur Stock</p>
+                        <p id="statStock" class="text-xl font-black text-gold">0 F</p>
+                    </div>
+                    <div class="bg-red-50 dark:bg-red-500/5 p-6 rounded-[2rem] border border-red-500/10">
+                        <p class="text-[8px] uppercase font-black text-red-500 mb-2">En Rupture</p>
+                        <p id="statOut" class="text-2xl font-black text-red-500">0</p>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-500/5 p-6 rounded-[2rem] border border-green-500/10">
+                        <p class="text-[8px] uppercase font-black text-green-500 mb-2">En Promo</p>
+                        <p id="statPromo" class="text-2xl font-black text-green-500">0</p>
                     </div>
                 </div>
-                <textarea id="pDesc" placeholder="Description courte..." class="w-full p-4 rounded-2xl border-none bg-white dark:bg-black text-xs h-24 shadow-sm"></textarea>
-                
-                <button type="submit" id="submitBtn" class="w-full gold-gradient text-deep py-5 rounded-2xl font-black uppercase text-[10px] shadow-lg tracking-widest">Publier sur la boutique</button>
-                <button type="button" onclick="resetForm()" id="cancelBtn" class="hidden w-full text-red-500 text-[10px] uppercase font-bold">Annuler la modification</button>
-            </form>
 
-            <div id="adminProdList" class="space-y-4"></div>
+                <!-- Formulaire Ajout -->
+                <form id="saveForm" class="bg-white dark:bg-premium p-8 rounded-[3rem] shadow-2xl space-y-6 border border-gray-100 dark:border-white/5" onsubmit="handleSave(event)">
+                    <h3 class="text-lg font-serif font-bold mb-4">Gérer un Produit</h3>
+                    <input type="hidden" id="editId">
+                    <input type="hidden" id="currentImgUrl">
+                    
+                    <div class="flex flex-col md:flex-row gap-8 items-center">
+                        <div class="relative group">
+                            <div id="photoPreview" class="w-40 h-40 rounded-[2.5rem] bg-gray-100 dark:bg-white/5 flex items-center justify-center border-2 border-dashed border-gold/30 overflow-hidden">
+                                <i class="fas fa-cloud-arrow-up text-gold/30 text-3xl"></i>
+                            </div>
+                            <label class="absolute inset-0 cursor-pointer">
+                                <input type="file" id="fileInput" accept="image/*" onchange="previewFile(event)" class="hidden">
+                            </label>
+                        </div>
+                        <div class="flex-grow w-full space-y-4">
+                            <input type="text" id="pName" placeholder="Nom de l'article" class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none font-bold text-xs outline-none focus:ring-2 ring-gold/50" required>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" id="pPrice" placeholder="Prix (FCFA)" class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none font-black text-xs outline-none focus:ring-2 ring-gold/50" required>
+                                <input type="number" id="pPromo" placeholder="Prix Promo (Optionnel)" class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none font-black text-xs outline-none focus:ring-2 ring-gold/50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <select id="pCat" class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none font-bold text-xs outline-none focus:ring-2 ring-gold/50"></select>
+                        <div class="flex gap-4">
+                            <div class="flex-grow bg-gray-50 dark:bg-white/5 p-4 rounded-2xl flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase opacity-40">En Stock</span>
+                                <input type="checkbox" id="pStock" checked class="w-6 h-6 accent-gold">
+                            </div>
+                            <div class="flex-grow bg-gray-50 dark:bg-white/5 p-4 rounded-2xl flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase opacity-40">Best Seller</span>
+                                <input type="checkbox" id="pBest" class="w-6 h-6 accent-gold">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <textarea id="pDesc" placeholder="Description luxueuse du produit..." class="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none font-medium text-xs h-24 outline-none focus:ring-2 ring-gold/50"></textarea>
+                    
+                    <div class="flex gap-4">
+                        <button type="submit" id="submitBtn" class="flex-grow gold-gradient text-black py-5 rounded-3xl font-black uppercase text-[10px] tracking-widest shadow-xl">Publier le Produit</button>
+                        <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden px-8 rounded-3xl bg-red-500 text-white font-black uppercase text-[10px]">Annuler</button>
+                    </div>
+                </form>
+
+                <div id="adminProdList" class="grid grid-cols-1 gap-4"></div>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL DETAIL PRODUIT -->
-    <div id="detailModal" class="fixed inset-0 z-[2000] hidden bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4">
-        <div class="w-full max-w-lg bg-white dark:bg-[#111] rounded-[3rem] overflow-hidden shadow-2xl relative animate__animated animate__zoomIn">
-            <button onclick="closeDetail()" class="absolute top-6 right-6 w-10 h-10 bg-black/20 backdrop-blur-md text-white rounded-full flex items-center justify-center z-10">&times;</button>
-            <div id="detailImg" class="h-80 w-full overflow-hidden"></div>
-            <div class="p-8">
-                <div class="flex justify-between items-start mb-4">
+    <!-- 8. MODAL DETAIL -->
+    <div id="detailModal" class="fixed inset-0 z-[2000] hidden bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+        <div class="w-full max-w-xl bg-white dark:bg-premium rounded-[3.5rem] overflow-hidden shadow-2xl relative animate__animated animate__zoomIn">
+            <button onclick="closeDetail()" class="absolute top-6 right-6 w-12 h-12 bg-black/20 text-white rounded-full flex items-center justify-center z-10 backdrop-blur-md">&times;</button>
+            <div id="detailImg" class="h-96 w-full overflow-hidden"></div>
+            <div class="p-10">
+                <div class="flex justify-between items-start mb-6">
                     <div>
-                        <span id="detailCat" class="text-[8px] font-black uppercase tracking-[0.2em] text-gold"></span>
-                        <h2 id="detailName" class="text-2xl font-serif font-bold dark:text-white mt-1"></h2>
+                        <span id="detailCat" class="text-[9px] font-black uppercase tracking-[0.3em] text-gold mb-2 block"></span>
+                        <h2 id="detailName" class="text-3xl font-serif font-black dark:text-white leading-none"></h2>
                     </div>
                     <div class="text-right">
-                        <p id="detailPrice" class="text-2xl font-black text-luxury dark:text-white"></p>
-                        <p id="detailPromo" class="text-xs line-through opacity-30"></p>
+                        <p id="detailPrice" class="text-3xl font-black gold-text leading-none"></p>
+                        <p id="detailPromo" class="text-sm line-through opacity-30 mt-2 font-bold"></p>
                     </div>
                 </div>
-                <p id="detailDesc" class="text-xs opacity-60 leading-relaxed mb-8 italic"></p>
-                
+                <p id="detailDesc" class="text-xs opacity-60 leading-relaxed mb-10 italic font-medium"></p>
                 <div class="flex gap-4">
-                    <button id="addBtnDetail" class="flex-grow gold-gradient text-deep py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Ajouter au panier</button>
-                    <button id="shareBtn" class="w-14 h-14 rounded-2xl border border-gray-100 dark:border-white/10 flex items-center justify-center text-xl active:bg-gold/10 transition-colors"><i class="fas fa-share-alt"></i></button>
+                    <button id="addBtnDetail" class="flex-grow gold-gradient text-black py-5 rounded-3xl font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-all">Ajouter au panier</button>
+                    <button id="shareBtn" class="w-16 h-16 rounded-3xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-xl border border-black/5 dark:border-white/5 active:bg-gold/10 transition-colors"><i class="fas fa-share-nodes"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { ref, push, remove, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+        // CONFIG & STATE
         let cart = [];
-        let wishlist = JSON.parse(localStorage.getItem('cs_wish_2026')) || [];
+        let wishlist = JSON.parse(localStorage.getItem('cs_favs_v2')) || [];
         let currentFilter = 'Tout';
         let currentTab = 'home';
-        let currentPhoto = '';
-        let lastScroll = 0;
+        let currentFile = null;
+        let isGérantMode = false;
 
-        // INITIALISATION
-        setTimeout(() => {
-            document.getElementById('splash').classList.add('splash-hide');
-            typeText("Cosmétique Services", "typewriter");
-        }, 2500);
+        const categories = [
+            '✨ Cosmétique', '🌸 Parfums', '👕 Vêtements', '👟 Chaussures', '📱 Électronique',
+            '🎧 Accessoires Tech', '⌚ Montres & Bijoux', '👜 Sacs & Maroquinerie', '🏠 Maison & Déco',
+            '💄 Maquillage', '⚡ Accessoires', '🎮 Gaming', '🛒 Supermarché', '🧸 Enfants & Jouets',
+            '🏋️ Sport', '📚 Livres & Fournitures', '🚗 Auto & Moto', '➕ Autre catégorie'
+        ];
 
-        function typeText(txt, el) {
-            let i = 0;
-            const container = document.getElementById(el);
-            function type() { if(i < txt.length) { container.innerHTML += txt.charAt(i); i++; setTimeout(type, 100); } }
-            type();
+        // 1. INITIALISATION & THEME
+        function initApp() {
+            const savedTheme = localStorage.getItem('cs_theme');
+            if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+            
+            // Animation Splash avec timing précis
+            const splashText = document.getElementById('splashText');
+            setTimeout(() => splashText.classList.replace('opacity-0', 'opacity-100'), 500);
+            setTimeout(() => {
+                document.getElementById('splash').classList.add('splash-done');
+                document.body.classList.remove('overflow-hidden');
+            }, 2500);
+
+            renderCatSelect();
+            updateWishCount();
+            updateCartBadge();
         }
 
-        // SMART NAV
-        window.addEventListener('scroll', () => {
-            const st = window.pageYOffset;
-            const nav = document.getElementById('smartNav');
-            if (st > lastScroll && st > 100) nav.style.transform = 'translateY(-100%)';
-            else nav.style.transform = 'translateY(0)';
-            lastScroll = st;
-        });
+        window.toggleTheme = () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('cs_theme', isDark ? 'dark' : 'light');
+            showToast(isDark ? "Mode sombre activé 🌙" : "Mode clair activé ☀️", "fa-circle-half-stroke");
+        };
 
-        // RENDER
-        function renderItems() {
+        // 2. RENDERING PRODUITS
+        window.renderItems = () => {
             const grid = document.getElementById('itemGrid');
             const search = document.getElementById('searchInput').value.toLowerCase();
+            const sort = document.getElementById('sortSelect').value;
             grid.innerHTML = '';
 
             let filtered = window.allProducts.filter(p => {
-                const matchesSearch = p.name.toLowerCase().includes(search);
-                const matchesFilter = currentFilter === 'Tout' || p.cat.includes(currentFilter);
-                const matchesWish = currentTab === 'wish' ? wishlist.includes(p.id) : true;
-                return matchesSearch && matchesFilter && matchesWish;
+                const matchesSearch = p.name?.toLowerCase().includes(search) || p.cat?.toLowerCase().includes(search);
+                const matchesFilter = currentFilter === 'Tout' || p.cat === currentFilter;
+                const matchesTab = currentTab === 'wish' ? wishlist.includes(p.id) : true;
+                return matchesSearch && matchesFilter && matchesTab;
             });
 
+            // Tri
+            if(sort === 'price-asc') filtered.sort((a,b) => (a.promoPrice || a.price) - (b.promoPrice || b.price));
+            if(sort === 'price-desc') filtered.sort((a,b) => (b.promoPrice || b.price) - (a.promoPrice || a.price));
+            if(sort === 'new') filtered.sort((a,b) => b.createdAt - a.createdAt);
+            if(sort === 'promo') filtered = filtered.filter(p => p.promoPrice);
+            if(sort === 'pop') filtered = filtered.filter(p => p.isBest);
+
             if(filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-20 text-center opacity-30 italic uppercase text-[10px] font-bold tracking-widest">Aucune pépite trouvée...</div>`;
+                grid.innerHTML = `
+                <div class="col-span-full py-20 text-center animate__animated animate__fadeIn">
+                    <div class="text-gold/20 text-6xl mb-4"><i class="fas fa-box-open"></i></div>
+                    <p class="text-[10px] uppercase font-black tracking-widest opacity-30">Aucun trésor trouvé ici...</p>
+                </div>`;
                 return;
             }
 
             filtered.forEach(p => {
                 const isLoved = wishlist.includes(p.id);
+                const isNew = (Date.now() - p.createdAt) < (1000 * 60 * 60 * 24 * 7); // 7 jours
                 const outOfStock = p.stock === false;
+                
                 grid.innerHTML += `
-                    <div class="product-card bg-white dark:bg-white/5 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-white/5 shadow-sm group relative">
-                        ${outOfStock ? '<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center"><span class="bg-white text-black text-[8px] font-black px-4 py-2 rounded-full uppercase">Épuisé</span></div>' : ''}
-                        <div class="relative h-48 overflow-hidden" onclick="openDetail('${p.id}')">
-                            <img src="${p.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                            ${p.promo ? `<span class="absolute top-4 left-4 bg-red-500 text-white text-[8px] font-black px-3 py-1 rounded-full">- ${Math.round((1 - p.price/p.promo)*100)}%</span>` : ''}
+                    <div class="p-card bg-white dark:bg-premium rounded-[2.5rem] overflow-hidden border border-black/[0.03] dark:border-white/[0.03] shadow-sm relative group animate__animated animate__fadeIn">
+                        ${outOfStock ? '<div class="absolute inset-0 bg-black/60 z-20 backdrop-blur-[2px] flex items-center justify-center"><span class="bg-white text-black text-[8px] font-black px-4 py-2 rounded-full uppercase tracking-widest">Rupture</span></div>' : ''}
+                        
+                        <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                            ${isNew ? '<span class="bg-black text-white text-[7px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter">Nouveau</span>' : ''}
+                            ${p.promoPrice ? `<span class="bg-gold text-black text-[7px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter">-${Math.round((1 - p.promoPrice/p.price)*100)}%</span>` : ''}
+                            ${p.isBest ? '<span class="bg-red-500 text-white text-[7px] font-black px-3 py-1.5 rounded-full uppercase tracking-tighter">Best</span>' : ''}
                         </div>
-                        <button onclick="toggleWish('${p.id}', event)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur dark:bg-black/50 flex items-center justify-center z-20 shadow-md">
+
+                        <button onclick="toggleWish('${p.id}', event)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 dark:bg-black/40 backdrop-blur flex items-center justify-center z-20 shadow-xl shadow-black/10 transition-transform active:scale-125">
                             <i class="fa${isLoved?'s':'r'} fa-heart ${isLoved?'text-red-500 animate__animated animate__heartBeat':''}"></i>
                         </button>
-                        <div class="p-5 flex flex-col items-center text-center">
-                            <span class="text-[7px] text-gold font-black uppercase tracking-[0.2em] mb-1">${p.cat}</span>
-                            <h3 class="font-bold text-[10px] uppercase truncate w-full mb-2 dark:text-white font-serif">${p.name}</h3>
-                            <div class="flex items-center gap-2 mb-4">
-                                <span class="font-black text-[12px]">${parseInt(p.price).toLocaleString()} <span class="text-[8px]">FCFA</span></span>
-                                ${p.promo ? `<span class="text-[9px] line-through opacity-30">${parseInt(p.promo).toLocaleString()}</span>` : ''}
+
+                        <div class="relative h-52 overflow-hidden cursor-pointer" onclick="openDetail('${p.id}')">
+                            <img src="${p.img || 'https://via.placeholder.com/300'}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+                        </div>
+
+                        <div class="p-6 flex flex-col items-center text-center">
+                            <span class="text-[7px] text-gold font-black uppercase tracking-widest mb-1 opacity-60">${p.cat}</span>
+                            <h3 class="font-bold text-[11px] uppercase truncate w-full mb-3 dark:text-white font-sans">${p.name}</h3>
+                            <div class="flex items-center gap-2 mb-5">
+                                <span class="font-black text-[13px] text-premium dark:text-white">${(p.promoPrice || p.price).toLocaleString()} F</span>
+                                ${p.promoPrice ? `<span class="text-[10px] line-through opacity-30 font-bold">${p.price.toLocaleString()} F</span>` : ''}
                             </div>
-                            <button onclick="addToCart('${p.id}')" ${outOfStock ? 'disabled' : ''} class="w-full gold-gradient py-3.5 rounded-2xl text-[9px] font-black uppercase text-deep shadow-md active:scale-95 transition-all">Ajouter</button>
+                            <button onclick="addToCart('${p.id}')" ${outOfStock ? 'disabled' : ''} class="w-full gold-gradient py-4 rounded-2xl text-[9px] font-black uppercase text-black shadow-lg shadow-gold/10 active:scale-95 transition-all">Ajouter</button>
                         </div>
                     </div>
                 `;
             });
-        }
+        };
 
-        function renderChips() {
-            const cats = ['Tout', '✨ Cosmétique', '🌸 Parfums', '👜 Sacs', '👠 Mode', '⚡ Accessoires'];
-            const container = document.getElementById('catBar');
-            container.innerHTML = cats.map(c => `
-                <button onclick="setFilter('${c}')" class="px-6 py-3 rounded-full border dark:border-white/10 whitespace-nowrap text-[9px] font-bold uppercase tracking-widest transition-all ${currentFilter === c ? 'bg-gold text-deep border-gold scale-105 shadow-lg' : 'bg-white dark:bg-white/5 opacity-60'}">
+        window.renderChips = () => {
+            const list = ['Tout', ...categories];
+            document.getElementById('catBar').innerHTML = list.map(c => `
+                <button onclick="setFilter('${c}')" class="px-6 py-3.5 rounded-full border border-black/5 dark:border-white/5 whitespace-nowrap text-[9px] font-black uppercase tracking-widest transition-all ${currentFilter === c ? 'gold-gradient text-black border-gold scale-105 shadow-xl shadow-gold/20' : 'bg-white dark:bg-white/5 opacity-40'}">
                     ${c}
                 </button>
             `).join('');
+        };
+
+        function renderCatSelect() {
+            const select = document.getElementById('pCat');
+            select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
-        function setFilter(c) {
+        window.setFilter = (c) => {
             currentFilter = c;
             currentTab = 'home';
-            renderItems();
-            renderChips();
+            window.renderItems();
+            window.renderChips();
+            updateNavUI();
+        };
+
+        // 3. LOGIQUE GÉRANT & FIREBASE STORAGE
+        window.previewFile = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                currentFile = file;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('photoPreview').innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.handleSave = async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const id = document.getElementById('editId').value;
+            const originalImg = document.getElementById('currentImgUrl').value;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+
+            let imgUrl = originalImg;
+
+            // 1. Upload si nouveau fichier
+            if(currentFile) {
+                try {
+                    const storageRef = sRef(window.storage, `products/${Date.now()}_${currentFile.name}`);
+                    const snapshot = await uploadBytes(storageRef, currentFile);
+                    imgUrl = await getDownloadURL(snapshot.ref);
+                } catch (err) {
+                    showToast("Erreur lors de l'upload image ❌", "fa-triangle-exclamation");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Publier le Produit";
+                    return;
+                }
+            }
+
+            if(!imgUrl && !id) {
+                showToast("Photo obligatoire ! 📸", "fa-camera");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Publier le Produit";
+                return;
+            }
+
+            const data = {
+                name: document.getElementById('pName').value,
+                price: parseInt(document.getElementById('pPrice').value),
+                promoPrice: document.getElementById('pPromo').value ? parseInt(document.getElementById('pPromo').value) : null,
+                cat: document.getElementById('pCat').value,
+                desc: document.getElementById('pDesc').value,
+                stock: document.getElementById('pStock').checked,
+                isBest: document.getElementById('pBest').checked,
+                img: imgUrl,
+                createdAt: id ? window.allProducts.find(x => x.id === id).createdAt : Date.now()
+            };
+
+            try {
+                if(id) {
+                    await update(ref(window.db, 'produits/' + id), data);
+                    showToast("Article mis à jour ! ✨", "fa-check-double");
+                } else {
+                    await push(window.dbRef, data);
+                    showToast("Article publié ! 🌍", "fa-earth-africa");
+                }
+                resetForm();
+            } catch (err) {
+                showToast("Erreur Base de données ❌", "fa-database");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Publier le Produit";
+            }
+        };
+
+        window.verifyAdmin = () => {
+            if(document.getElementById('adminPass').value === "2026") {
+                isGérantMode = true;
+                window.isGérantMode = true;
+                document.getElementById('adminAuth').classList.add('hidden');
+                document.getElementById('adminTools').classList.remove('hidden');
+                renderAdminList();
+                updateStats();
+                showToast("Bienvenue Chef ! 👑", "fa-crown");
+            } else {
+                showToast("Accès refusé ❌", "fa-lock");
+            }
+        };
+
+        window.renderAdminList = () => {
+            const container = document.getElementById('adminProdList');
+            container.innerHTML = window.allProducts.map(p => `
+                <div class="flex items-center gap-4 bg-white dark:bg-premium p-4 rounded-3xl border border-black/[0.03] dark:border-white/[0.03] shadow-sm animate__animated animate__fadeIn">
+                    <img src="${p.img}" class="w-14 h-14 rounded-2xl object-cover shadow-lg">
+                    <div class="flex-grow">
+                        <p class="text-[10px] font-black uppercase truncate w-32 dark:text-white">${p.name}</p>
+                        <p class="text-[9px] text-gold font-bold">${p.price.toLocaleString()} F</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editProduct('${p.id}')" class="w-10 h-10 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center active:scale-90 transition-transform"><i class="fas fa-pen text-[10px]"></i></button>
+                        <button onclick="confirmDelete('${p.id}')" class="w-10 h-10 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center active:scale-90 transition-transform"><i class="fas fa-trash text-[10px]"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        window.editProduct = (id) => {
+            const p = window.allProducts.find(x => x.id === id);
+            document.getElementById('editId').value = p.id;
+            document.getElementById('currentImgUrl').value = p.img;
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pPrice').value = p.price;
+            document.getElementById('pPromo').value = p.promoPrice || '';
+            document.getElementById('pCat').value = p.cat;
+            document.getElementById('pDesc').value = p.desc;
+            document.getElementById('pStock').checked = p.stock !== false;
+            document.getElementById('pBest').checked = p.isBest === true;
+            document.getElementById('photoPreview').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
+            document.getElementById('submitBtn').innerText = "Mettre à jour l'article";
+            document.getElementById('cancelBtn').classList.remove('hidden');
+            document.getElementById('saveForm').scrollIntoView({behavior: 'smooth'});
+        };
+
+        window.confirmDelete = (id) => {
+            customConfirm("Supprimer ?", "Cette action est irréversible. Voulez-vous vraiment retirer cet article ?", async () => {
+                await remove(ref(window.db, 'produits/' + id));
+                showToast("Produit supprimé ! 🗑️", "fa-trash-can");
+            });
+        };
+
+        window.resetForm = () => {
+            document.getElementById('saveForm').reset();
+            document.getElementById('editId').value = "";
+            document.getElementById('currentImgUrl').value = "";
+            document.getElementById('photoPreview').innerHTML = '<i class="fas fa-cloud-arrow-up text-gold/30 text-3xl"></i>';
+            document.getElementById('submitBtn').innerText = "Publier le Produit";
+            document.getElementById('cancelBtn').classList.add('hidden');
+            currentFile = null;
+        };
+
+        function updateStats() {
+            document.getElementById('statTotal').innerText = window.allProducts.length;
+            const stockValue = window.allProducts.reduce((acc, p) => acc + (parseInt(p.price) || 0), 0);
+            document.getElementById('statStock').innerText = stockValue.toLocaleString() + ' F';
+            document.getElementById('statOut').innerText = window.allProducts.filter(p => p.stock === false).length;
+            document.getElementById('statPromo').innerText = window.allProducts.filter(p => p.promoPrice).length;
         }
 
-        // CART
-        function addToCart(id) {
+        // 4. PANIER & COMMANDES
+        window.addToCart = (id) => {
             const p = window.allProducts.find(x => x.id === id);
+            if(p.stock === false) return showToast("Article en rupture ❌", "fa-circle-xmark");
+            
             const exist = cart.find(x => x.id === id);
-            if(exist) exist.qty++; else cart.push({...p, qty: 1});
+            if(exist) exist.qty++; 
+            else cart.push({...p, qty: 1});
+            
             updateCartBadge();
-            showToast("Produit ajouté au panier ! ✨");
-        }
+            showToast("Ajouté au panier ! ✨", "fa-cart-plus");
+        };
 
         function updateCartBadge() {
             const badge = document.getElementById('cartBadge');
@@ -368,207 +624,107 @@
             if(total > 0) badge.classList.add('animate__bounceIn');
         }
 
-        function updateCartUI() {
+        window.updateCartUI = () => {
             const container = document.getElementById('cartItems');
             let total = 0;
             if(cart.length === 0) {
-                container.innerHTML = `<div class="py-20 text-center opacity-20 uppercase text-[9px] font-black tracking-widest">Votre panier est vide</div>`;
+                container.innerHTML = `
+                <div class="py-20 text-center opacity-30">
+                    <i class="fas fa-shopping-basket text-5xl mb-4"></i>
+                    <p class="text-[9px] font-black uppercase tracking-widest">Le panier est vide</p>
+                </div>`;
             } else {
                 container.innerHTML = cart.map((item, idx) => {
-                    total += item.price * item.qty;
+                    const price = item.promoPrice || item.price;
+                    total += price * item.qty;
                     return `
-                        <div class="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-[2rem] border border-gray-100 dark:border-white/5 animate__animated animate__fadeInRight" style="animation-delay: ${idx*0.1}s">
+                        <div class="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-[2rem] border border-black/[0.03] dark:border-white/[0.03]">
                             <img src="${item.img}" class="w-16 h-16 rounded-2xl object-cover">
                             <div class="flex-grow">
-                                <h4 class="text-[9px] font-black uppercase truncate w-32">${item.name}</h4>
-                                <p class="text-gold font-black text-xs">${item.price.toLocaleString()} FCFA</p>
-                                <div class="flex items-center gap-3 mt-2 bg-white dark:bg-black w-fit px-3 py-1 rounded-full shadow-sm">
+                                <h4 class="text-[9px] font-black uppercase truncate w-32 dark:text-white">${item.name}</h4>
+                                <p class="text-gold font-black text-xs">${price.toLocaleString()} F</p>
+                                <div class="flex items-center gap-3 mt-2 bg-white dark:bg-black w-fit px-3 py-1.5 rounded-full shadow-sm">
                                     <button onclick="changeQty(${idx}, -1)" class="text-lg">-</button>
                                     <span class="text-xs font-bold">${item.qty}</span>
                                     <button onclick="changeQty(${idx}, 1)" class="text-gold text-lg">+</button>
                                 </div>
                             </div>
-                            <button onclick="removeFromCart(${idx})" class="w-8 h-8 flex items-center justify-center text-red-400 bg-red-50 dark:bg-red-500/10 rounded-full"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                            <button onclick="removeFromCart(${idx})" class="w-10 h-10 flex items-center justify-center text-red-400 bg-red-50 dark:bg-red-500/10 rounded-full active:scale-90 transition-all"><i class="fas fa-trash-alt text-[10px]"></i></button>
                         </div>
                     `;
                 }).join('');
             }
             document.getElementById('cartTotal').innerText = total.toLocaleString() + " FCFA";
-        }
+        };
 
-        function changeQty(idx, delta) {
+        window.changeQty = (idx, delta) => {
             cart[idx].qty += delta;
             if(cart[idx].qty < 1) cart.splice(idx, 1);
-            updateCartUI();
+            window.updateCartUI();
             updateCartBadge();
-        }
+        };
 
-        function removeFromCart(idx) {
+        window.removeFromCart = (idx) => {
             cart.splice(idx, 1);
-            updateCartUI();
+            window.updateCartUI();
             updateCartBadge();
-        }
+        };
 
-        // ADMIN FUNCTIONS
-        function verifyAdmin() {
-            if(document.getElementById('adminPass').value === "2026") {
-                document.getElementById('adminAuth').classList.add('hidden');
-                document.getElementById('adminTools').classList.remove('hidden');
-                document.getElementById('adminStats').classList.remove('hidden');
-                renderAdminList();
-                updateStats();
-            } else {
-                showToast("Code erroné ❌");
-            }
-        }
-
-        function updateStats() {
-            document.getElementById('statCount').innerText = window.allProducts.length;
-            const val = window.allProducts.reduce((a, b) => a + parseInt(b.price), 0);
-            document.getElementById('statValue').innerText = val.toLocaleString();
-        }
-
-        async function handlePhoto(e) {
-            const file = e.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    currentPhoto = ev.target.result;
-                    document.getElementById('photoPreview').innerHTML = `<img src="${currentPhoto}" class="w-full h-full object-cover">`;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function handleSave(e) {
-            e.preventDefault();
-            const id = document.getElementById('editId').value;
-            const data = {
-                name: document.getElementById('pName').value,
-                price: parseInt(document.getElementById('pPrice').value),
-                promo: document.getElementById('pPromo').value ? parseInt(document.getElementById('pPromo').value) : null,
-                cat: document.getElementById('pCat').value,
-                desc: document.getElementById('pDesc').value,
-                stock: document.getElementById('pStock').checked,
-                img: currentPhoto
-            };
-
-            if(!currentPhoto) return showToast("Photo manquante ! 📸");
-
-            try {
-                if(id) await window.apiUpdate(id, data);
-                else await window.apiSave(data);
-                showToast(id ? "Mise à jour réussie ! ✨" : "Publication réussie ! 🌍");
-                resetForm();
-            } catch (err) {
-                showToast("Erreur lors de l'envoi ❌");
-            }
-        }
-
-        function renderAdminList() {
-            const list = document.getElementById('adminProdList');
-            list.innerHTML = window.allProducts.map(p => `
-                <div class="flex items-center gap-4 bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5">
-                    <img src="${p.img}" class="w-12 h-12 rounded-xl object-cover">
-                    <div class="flex-grow">
-                        <p class="text-[10px] font-black uppercase truncate w-32">${p.name}</p>
-                        <p class="text-[9px] text-gold font-bold">${p.price} FCFA</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="editProduct('${p.id}')" class="w-8 h-8 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center"><i class="fas fa-pen text-[10px]"></i></button>
-                        <button onclick="confirmDelete('${p.id}')" class="w-8 h-8 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function editProduct(id) {
-            const p = window.allProducts.find(x => x.id === id);
-            document.getElementById('editId').value = p.id;
-            document.getElementById('pName').value = p.name;
-            document.getElementById('pPrice').value = p.price;
-            document.getElementById('pPromo').value = p.promo || '';
-            document.getElementById('pCat').value = p.cat;
-            document.getElementById('pDesc').value = p.desc;
-            document.getElementById('pStock').checked = p.stock !== false;
-            currentPhoto = p.img;
-            document.getElementById('photoPreview').innerHTML = `<img src="${currentPhoto}" class="w-full h-full object-cover">`;
-            document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
-            document.getElementById('cancelBtn').classList.remove('hidden');
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        function confirmDelete(id) {
-            if(confirm("Voulez-vous vraiment supprimer ce produit ?")) {
-                window.apiDelete(id);
-                showToast("Supprimé ! 🗑️");
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('saveForm').reset();
-            document.getElementById('editId').value = "";
-            document.getElementById('photoPreview').innerHTML = "";
-            currentPhoto = "";
-            document.getElementById('submitBtn').innerText = "Publier sur la boutique";
-            document.getElementById('cancelBtn').classList.add('hidden');
-        }
-
-        // WHATSAPP ORDER
-        function sendOrder() {
+        window.sendOrder = () => {
             const name = document.getElementById('clientName').value;
             const area = document.getElementById('clientArea').value;
-            if(!name || !area || cart.length === 0) return showToast("Veuillez remplir vos infos ! 📍");
+            if(!name || !area || cart.length === 0) return showToast("Infos incomplètes ! 📍", "fa-location-dot");
 
-            let message = `*COMMANDE COSMÉTIQUE SERVICES*%0A%0A`;
+            let message = `*COMMANDES COSMÉTIQUE SERVICES*%0A`;
+            message += `----------------------------%0A`;
             message += `👤 *Client:* ${name}%0A`;
-            message += `📍 *Lieu:* ${area}%0A`;
+            message += `📍 *Livraison:* ${area}%0A`;
             message += `----------------------------%0A`;
             
             cart.forEach(item => {
-                message += `• ${item.qty}x *${item.name}* (${item.price * item.qty} FCFA)%0A`;
+                const price = item.promoPrice || item.price;
+                message += `• ${item.qty}x *${item.name}*%0A  _Prix: ${price.toLocaleString()} F / u_%0A`;
             });
 
             message += `----------------------------%0A`;
-            message += `💰 *TOTAL:* ${document.getElementById('cartTotal').innerText}`;
+            message += `💰 *TOTAL À PAYER:* ${document.getElementById('cartTotal').innerText}%0A`;
+            message += `----------------------------%0A`;
+            message += `_Merci pour votre confiance ! ✨_`;
             
             window.open(`https://wa.me/221778165450?text=${message}`, '_blank');
-        }
+        };
 
-        // HELPERS UI
-        function toggleDark() { document.documentElement.classList.toggle('dark'); }
-        function openCart() { document.getElementById('cartDrawer').style.transform = 'translateX(0)'; document.getElementById('cartOverlay').classList.remove('hidden'); updateCartUI(); }
-        function closeCart() { document.getElementById('cartDrawer').style.transform = 'translateX(100%)'; document.getElementById('cartOverlay').classList.add('hidden'); }
-        function openAdmin() { document.getElementById('adminPanel').classList.remove('hidden'); }
-        function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
-        
-        function changeTab(t) {
+        // 5. FONCTIONS UI & NAVIGATION
+        window.changeTab = (t) => {
             currentTab = t;
+            if(t === 'home') currentFilter = 'Tout';
+            window.renderItems();
+            window.renderChips();
+            updateNavUI();
+            if(t === 'home') window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+
+        function updateNavUI() {
             document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-gold', 'text-gray-400'));
-            document.getElementById('btn-'+t).classList.replace('text-gray-400', 'text-gold');
-            renderItems();
+            const activeBtn = document.getElementById('nav-' + currentTab);
+            if(activeBtn) activeBtn.classList.replace('text-gray-400', 'text-gold');
+            updateWishCount();
         }
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.querySelector('span').innerText = msg;
-            t.style.opacity = '1';
-            t.style.transform = 'translate(-50%, 20px)';
-            setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transform = 'translate(-50%, -20px)';
-            }, 3000);
-        }
-
-        function toggleWish(id, e) {
+        window.toggleWish = (id, e) => {
             e.stopPropagation();
             const idx = wishlist.indexOf(id);
-            if(idx > -1) wishlist.splice(idx, 1);
-            else wishlist.push(id);
-            localStorage.setItem('cs_wish_2026', JSON.stringify(wishlist));
+            if(idx > -1) {
+                wishlist.splice(idx, 1);
+                showToast("Retiré des favoris", "fa-heart-crack");
+            } else {
+                wishlist.push(id);
+                showToast("Ajouté aux favoris ! ❤️", "fa-heart");
+            }
+            localStorage.setItem('cs_favs_v2', JSON.stringify(wishlist));
             updateWishCount();
-            renderItems();
-        }
+            window.renderItems();
+        };
 
         function updateWishCount() {
             const el = document.getElementById('wishCount');
@@ -576,39 +732,68 @@
             el.classList.toggle('hidden', wishlist.length === 0);
         }
 
-        function openDetail(id) {
+        window.openDetail = (id) => {
             const p = window.allProducts.find(x => x.id === id);
             document.getElementById('detailImg').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
             document.getElementById('detailName').innerText = p.name;
             document.getElementById('detailCat').innerText = p.cat;
-            document.getElementById('detailPrice').innerText = p.price.toLocaleString() + " FCFA";
-            document.getElementById('detailPromo').innerText = p.promo ? p.promo.toLocaleString() + " FCFA" : "";
-            document.getElementById('detailDesc').innerText = p.desc || "Ce produit premium a été sélectionné avec soin par Cosmétique Services pour sa qualité d'exception.";
+            document.getElementById('detailPrice').innerText = (p.promoPrice || p.price).toLocaleString() + " FCFA";
+            document.getElementById('detailPromo').innerText = p.promoPrice ? p.price.toLocaleString() + " FCFA" : "";
+            document.getElementById('detailDesc').innerText = p.desc || "Découvrez un produit d'exception sélectionné par Cosmétique Services pour sublimer votre quotidien.";
             
-            document.getElementById('addBtnDetail').onclick = () => { addToCart(p.id); closeDetail(); };
+            document.getElementById('addBtnDetail').onclick = () => { window.addToCart(p.id); closeDetail(); };
             document.getElementById('shareBtn').onclick = () => shareProduct(p);
             
             document.getElementById('detailModal').classList.remove('hidden');
             document.getElementById('detailModal').style.display = 'flex';
-        }
+        };
 
-        function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
+        window.closeDetail = () => document.getElementById('detailModal').style.display = 'none';
 
         async function shareProduct(p) {
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: p.name,
-                        text: `Regarde ce produit chez Cosmétique Services : ${p.name} à ${p.price} FCFA`,
-                        url: window.location.href,
-                    });
-                } catch (err) {}
-            } else {
-                showToast("Lien copié ! 📋");
-            }
+            const shareData = { title: p.name, text: `Découvrez ${p.name} chez Cosmétique Services !`, url: window.location.href };
+            if (navigator.share) await navigator.share(shareData);
+            else showToast("Lien prêt à être partagé !", "fa-link");
         }
 
-        updateWishCount();
+        window.showToast = (msg, iconClass) => {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toastIcon').innerHTML = `<i class="fas ${iconClass}"></i>`;
+            t.style.opacity = '1';
+            t.style.transform = 'translate(-50%, 0)';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translate(-50%, -50px)';
+            }, 3000);
+        };
+
+        window.customConfirm = (title, desc, callback) => {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmDesc').innerText = desc;
+            modal.style.display = 'flex';
+            document.getElementById('confirmBtn').onclick = () => {
+                callback();
+                closeConfirm();
+            };
+        };
+
+        window.closeConfirm = () => document.getElementById('confirmModal').style.display = 'none';
+
+        window.openCart = () => { 
+            document.getElementById('cartDrawer').style.transform = 'translateX(0)'; 
+            document.getElementById('cartOverlay').classList.remove('hidden'); 
+            window.updateCartUI(); 
+        };
+        window.closeCart = () => { 
+            document.getElementById('cartDrawer').style.transform = 'translateX(100%)'; 
+            document.getElementById('cartOverlay').classList.add('hidden'); 
+        };
+        window.openAdmin = () => document.getElementById('adminPanel').classList.remove('hidden');
+        window.closeAdmin = () => document.getElementById('adminPanel').classList.add('hidden');
+
+        initApp();
     </script>
 </body>
-</html>
+                </html>
