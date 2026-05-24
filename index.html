@@ -36,8 +36,11 @@
         if(window.isGerantLoggedIn) { renderAdminList(); updateStats(); }
       });
 
-      // Correction ici pour garantir le retour de promesse
-      window.apiSave = (data) => push(window.dbRef, data);
+      // Correction de la gestion des promesses Firebase
+      window.apiSave = (data) => {
+        const newRef = push(window.dbRef);
+        return set(newRef, data);
+      };
       window.apiUpdate = (id, data) => set(ref(db, 'produits/' + id), data);
       window.apiDelete = (id) => remove(ref(db, 'produits/' + id));
     </script>
@@ -285,11 +288,9 @@
             } else { showToast("Code erroné ❌"); }
         };
 
-        // CORRECTION MAJEURE ICI : Gestion des erreurs et du nettoyage
         window.handleSave = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            const originalText = btn.innerText;
             
             const id = document.getElementById('editId').value;
             const finalImg = compressedImg || document.getElementById('currentImgUrl').value;
@@ -318,13 +319,13 @@
                 }
                 
                 showToast("Opération réussie ! ✅");
-                resetForm(); // Vide tout pour la suite
+                resetForm(); 
             } catch (err) { 
-                console.error(err);
+                console.error("Erreur Firebase :", err);
                 showToast("Erreur de connexion Firebase ❌"); 
             } finally { 
                 btn.disabled = false; 
-                btn.innerText = "Publier l'Article"; 
+                btn.innerText = id ? "Enregistrer les modifications" : "Publier l'Article"; 
             }
         };
 
@@ -353,18 +354,17 @@
             document.getElementById('photoPreview').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
             document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
             document.getElementById('cancelBtn').classList.remove('hidden');
-            compressedImg = ''; // Très important
+            compressedImg = ''; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // CORRECTION ICI : Nettoyage complet
         window.resetForm = () => {
             document.getElementById('saveForm').reset();
             document.getElementById('editId').value = "";
             document.getElementById('currentImgUrl').value = "";
-            document.getElementById('fileInput').value = ""; // Vide l'input file
-            compressedImg = ''; // Vide la variable image
-            document.getElementById('photoPreview').innerHTML = `<i class="fas fa-camera text-gold text-2xl"></i>`;
+            document.getElementById('fileInput').value = ""; 
+            compressedImg = ''; 
+            document.getElementById('photoPreview').innerHTML = `<i class="fas fa-camera text-gold text-2xl"></i>`; 
             document.getElementById('submitBtn').innerText = "Publier l'Article";
             document.getElementById('cancelBtn').classList.add('hidden');
         };
