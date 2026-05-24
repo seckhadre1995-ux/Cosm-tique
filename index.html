@@ -65,7 +65,6 @@
 
 <body class="bg-[#F9F9F9] dark:bg-deep text-luxury dark:text-gray-100 pb-32">
 
-    <!-- SPLASH SCREEN -->
     <div id="splash">
         <div class="w-16 h-16 border-2 border-gold rounded-full flex items-center justify-center animate-spin mb-4">
             <span class="text-gold font-serif text-xl font-bold animate-pulse">CS</span>
@@ -73,12 +72,10 @@
         <h1 class="text-white font-serif text-lg tracking-[0.3em] font-bold uppercase">Cosmétique Services</h1>
     </div>
 
-    <!-- TOAST -->
     <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[11000] glass px-8 py-4 rounded-3xl shadow-2xl opacity-0 transition-all duration-500 translate-y-[-50px] border border-gold/20">
         <span id="toastMsg" class="text-[10px] font-black uppercase tracking-widest text-black dark:text-white"></span>
     </div>
 
-    <!-- HEADER -->
     <header class="fixed top-0 inset-x-0 z-[90] glass border-b border-gray-100 dark:border-white/5 px-6 py-5">
         <div class="max-w-6xl mx-auto space-y-5">
             <div class="flex justify-between items-center">
@@ -104,13 +101,29 @@
 
     <main id="itemGrid" class="mt-48 px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-6xl mx-auto mb-20"></main>
 
-    <!-- NAVIGATION -->
+    <!-- NAVIGATION BAS -->
     <nav class="fixed bottom-6 inset-x-6 h-16 glass rounded-[2rem] z-[100] flex justify-around items-center px-2 shadow-2xl border border-white/20">
         <button onclick="changeTab('home')" id="nav-home" class="flex flex-col items-center gap-1 text-gold"><i class="fas fa-house-chimney text-lg"></i><span class="text-[7px] uppercase font-black">Boutique</span></button>
         <button onclick="changeTab('wish')" id="nav-wish" class="flex flex-col items-center gap-1 text-gray-400 relative"><i class="fas fa-heart text-lg"></i><span id="wishCount" class="absolute -top-1 -right-1 bg-gold text-black text-[7px] w-4 h-4 rounded-full hidden flex items-center justify-center font-black">0</span><span class="text-[7px] uppercase font-black">Favoris</span></button>
         <button onclick="openCart()" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-cart-shopping text-lg"></i><span class="text-[7px] uppercase font-black">Panier</span></button>
         <button onclick="openAdmin()" id="nav-admin" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-crown text-lg"></i><span class="text-[7px] uppercase font-black">Gérant</span></button>
     </nav>
+
+    <!-- PANIER -->
+    <div id="cartOverlay" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-md" onclick="closeCart()"></div>
+    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#080808] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl rounded-l-[2rem] overflow-hidden">
+        <div class="p-8 border-b dark:border-white/5 flex justify-between items-center">
+            <h2 class="text-xl font-serif font-black uppercase">Mon Panier</h2>
+            <button onclick="closeCart()" class="text-3xl">&times;</button>
+        </div>
+        <div id="cartItems" class="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar"></div>
+        <div class="p-8 space-y-4 bg-white dark:bg-luxury border-t dark:border-white/5">
+            <div class="flex justify-between items-center mb-4"><span class="text-xs font-bold opacity-40 uppercase tracking-widest">Total</span><span id="cartTotal" class="text-2xl font-black gold-text">0 F</span></div>
+            <input type="text" id="clientName" placeholder="Votre Nom complet" class="w-full p-4 rounded-xl bg-gray-100 dark:bg-white/5 text-[11px] font-bold outline-none border dark:border-white/5">
+            <input type="text" id="clientArea" placeholder="Quartier de livraison" class="w-full p-4 rounded-xl bg-gray-100 dark:bg-white/5 text-[11px] font-bold outline-none border dark:border-white/5">
+            <button onclick="sendOrder()" class="w-full gold-gradient text-black py-5 rounded-2xl font-black text-[10px] uppercase shadow-lg">Commander WhatsApp</button>
+        </div>
+    </aside>
 
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-deep p-6 overflow-y-auto no-scrollbar">
@@ -133,26 +146,17 @@
                     <div class="bg-green-500/10 p-5 rounded-3xl text-center"><p class="text-[7px] font-black text-green-500">PROMOS</p><p id="statPromo" class="text-xl font-black">0</p></div>
                 </div>
 
-                <!-- FORMULAIRE CORRIGÉ -->
-                <form id="saveForm" class="bg-gray-50 dark:bg-luxury p-8 rounded-[2.5rem] space-y-5 border dark:border-white/5 shadow-inner" onsubmit="handleSave(event)">
+                <form id="saveForm" class="bg-gray-50 dark:bg-luxury p-8 rounded-[2.5rem] space-y-5 border dark:border-white/5" onsubmit="handleSave(event)">
                     <input type="hidden" id="editId">
                     <input type="hidden" id="currentImgUrl">
-                    
                     <div class="flex items-center gap-6">
-                        <!-- CONTAINER PHOTO RELATIVE POUR LE BOUTON X -->
                         <div class="relative w-28 h-28">
-                            <div class="w-full h-full rounded-2xl bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden border-2 border-dashed border-gold relative" id="photoPreview">
+                            <div class="w-full h-full rounded-2xl bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden border-2 border-dashed border-gold" id="photoPreview">
                                 <i class="fas fa-camera text-gold text-2xl"></i>
                             </div>
-                            <!-- INPUT CACHÉ SUR TOUTE LA ZONE -->
                             <input type="file" id="fileInput" accept="image/*" onchange="previewAndCompress(event)" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                            
-                            <!-- BOUTON X BIEN VISIBLE (Rouge) -->
-                            <button type="button" id="clearPhotoBtn" onclick="clearPhoto(event)" class="absolute -top-3 -right-3 w-8 h-8 bg-red-600 text-white rounded-full hidden z-[100] flex items-center justify-center shadow-xl border-2 border-white">
-                                <i class="fas fa-times text-xs"></i>
-                            </button>
+                            <button type="button" id="clearPhotoBtn" onclick="clearPhoto(event)" class="absolute -top-3 -right-3 w-8 h-8 bg-red-600 text-white rounded-full hidden z-[100] flex items-center justify-center shadow-xl border-2 border-white"><i class="fas fa-times text-xs"></i></button>
                         </div>
-
                         <div class="flex-grow space-y-4">
                             <input type="text" id="pName" placeholder="Nom du produit" class="w-full p-4 rounded-xl bg-white dark:bg-black text-[11px] font-bold outline-none" required>
                             <div class="grid grid-cols-2 gap-4">
@@ -161,17 +165,13 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <select id="pCat" class="p-4 rounded-xl bg-white dark:bg-black text-[11px] font-bold outline-none" required></select>
                         <label class="flex items-center justify-between px-5 bg-white dark:bg-black rounded-xl text-[9px] font-black uppercase opacity-60">En Stock <input type="checkbox" id="pStock" checked class="w-5 h-5 accent-gold"></label>
                     </div>
                     <textarea id="pDesc" placeholder="Description luxe..." class="w-full p-4 rounded-xl bg-white dark:bg-black text-[11px] h-24 outline-none"></textarea>
-                    
-                    <button type="submit" id="submitBtn" class="w-full gold-gradient text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">Publier l'Article</button>
-                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden w-full text-red-500 font-bold uppercase text-[9px] text-center">Annuler la modification</button>
+                    <button type="submit" id="submitBtn" class="w-full gold-gradient text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest">Publier l'Article</button>
                 </form>
-
                 <div id="adminProdList" class="space-y-4 pb-20"></div>
             </div>
         </div>
@@ -179,15 +179,13 @@
 
     <script>
         let cart = [], wishlist = JSON.parse(localStorage.getItem('cs_favs_market')) || [], currentFilter = 'Tout', currentTab = 'home', compressedImg = '', isGerantLoggedIn = false;
-        
         const categories = ['✨ Cosmétique', '🌸 Parfums', '👕 Vêtements', '👟 Chaussures', '📱 Électronique', '⌚ Bijoux', '👜 Sacs', '🏠 Maison', '💄 Maquillage', '➕ Autre'];
 
         function renderCatSelect() {
             const select = document.getElementById('pCat');
-            if(select) select.innerHTML = '<option value="" disabled selected>Catégorie</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            if(select) select.innerHTML = '<option value="" disabled selected>Choisir une catégorie</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
-        // COMPRESSION FORTE (Pour éviter erreur réseau)
         function previewAndCompress(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -198,10 +196,9 @@
                 img.src = event.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 380; // Taille optimale
+                    const MAX_WIDTH = 350;
                     const scale = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scale;
+                    canvas.width = MAX_WIDTH; canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     compressedImg = canvas.toDataURL('image/jpeg', 0.4); 
@@ -211,7 +208,6 @@
             };
         }
 
-        // EFFACER LA PHOTO
         window.clearPhoto = (e) => {
             if(e) e.stopPropagation();
             compressedImg = '';
@@ -225,11 +221,8 @@
             const btn = document.getElementById('submitBtn');
             const id = document.getElementById('editId').value;
             const finalImg = compressedImg || document.getElementById('currentImgUrl').value;
-            
             if(!finalImg) return showToast("Photo obligatoire ! 📸");
-            
-            btn.disabled = true;
-            btn.innerText = "Synchronisation...";
+            btn.disabled = true; btn.innerText = "Synchronisation...";
 
             const data = {
                 name: document.getElementById('pName').value,
@@ -243,15 +236,11 @@
             };
 
             try {
-                if(id) { await window.apiUpdate(id, data); showToast("Mis à jour avec succès ! ✅"); }
-                else { await window.apiSave(data); showToast("Publié avec succès ! ✅"); }
+                if(id) await window.apiUpdate(id, data); else await window.apiSave(data);
+                showToast("Opération réussie ! ✅");
                 resetForm();
-            } catch (err) {
-                showToast("Erreur Réseau (Photo trop lourde) ❌");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Publier l'Article";
-            }
+            } catch (err) { showToast("Erreur de réseau ❌"); } 
+            finally { btn.disabled = false; btn.innerText = "Publier l'Article"; }
         };
 
         window.resetForm = () => {
@@ -259,8 +248,6 @@
             document.getElementById('editId').value = "";
             document.getElementById('currentImgUrl').value = "";
             clearPhoto();
-            document.getElementById('submitBtn').innerText = "Publier l'Article";
-            document.getElementById('cancelBtn').classList.add('hidden');
         };
 
         window.renderItems = () => {
@@ -268,14 +255,15 @@
             if(!grid || !window.allProducts) return;
             grid.innerHTML = '';
             window.allProducts.filter(p => {
-                const matchesSearch = p.name?.toLowerCase().includes(document.getElementById('searchInput').value.toLowerCase());
+                const search = document.getElementById('searchInput').value.toLowerCase();
+                const matchesSearch = p.name?.toLowerCase().includes(search);
                 const matchesFilter = currentFilter === 'Tout' || p.cat === currentFilter;
                 return matchesSearch && matchesFilter && (currentTab === 'wish' ? wishlist.includes(p.id) : true);
             }).forEach(p => {
                 const out = p.stock === false; const loved = wishlist.includes(p.id);
                 grid.innerHTML += `<div class="p-card bg-white dark:bg-luxury rounded-[2rem] overflow-hidden shadow-sm relative border dark:border-white/5">
                     ${out ? '<div class="absolute inset-0 bg-black/60 z-10 flex items-center justify-center font-black text-white text-[8px]">ÉPUISÉ</div>' : ''}
-                    <button onclick="toggleWish('${p.id}', event)" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center shadow-sm"><i class="fa${loved?'s':'r'} fa-heart ${loved?'text-red-500':''}"></i></button>
+                    <button onclick="toggleWish('${p.id}', event)" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center"><i class="fa${loved?'s':'r'} fa-heart ${loved?'text-red-500':''}"></i></button>
                     <img src="${p.img}" class="h-40 w-full object-cover">
                     <div class="p-4 text-center">
                         <span class="text-[6px] text-gold font-black uppercase">${p.cat}</span>
@@ -287,15 +275,73 @@
             });
         };
 
+        // FONCTIONS PANIER
+        window.openCart = () => {
+            document.getElementById('cartDrawer').style.transform = 'translateX(0)';
+            document.getElementById('cartOverlay').classList.remove('hidden');
+            window.updateCartUI();
+        };
+
+        window.closeCart = () => {
+            document.getElementById('cartDrawer').style.transform = 'translateX(100%)';
+            document.getElementById('cartOverlay').classList.add('hidden');
+        };
+
+        window.addToCart = (id) => {
+            const p = window.allProducts.find(x => x.id === id);
+            const exist = cart.find(x => x.id === id);
+            if(exist) exist.qty++; else cart.push({...p, qty: 1});
+            updateCartBadge();
+            showToast("Ajouté au panier ✨");
+        };
+
+        window.updateCartBadge = () => {
+            const b = document.getElementById('cartBadge');
+            const total = cart.reduce((a,c) => a + c.qty, 0);
+            if(b) { b.innerText = total; b.classList.toggle('hidden', total === 0); }
+        };
+
+        window.updateCartUI = () => {
+            let total = 0;
+            document.getElementById('cartItems').innerHTML = cart.map((item, idx) => {
+                const price = item.promoPrice || item.price; total += price * item.qty;
+                return `<div class="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-2xl">
+                    <img src="${item.img}" class="w-14 h-14 rounded-lg object-cover">
+                    <div class="flex-grow font-black text-[9px] uppercase dark:text-white">${item.name}<p class="text-gold">${price.toLocaleString()} F</p></div>
+                    <div class="flex items-center gap-3"><button onclick="changeQty(${idx}, -1)" class="w-6 h-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm">-</button><span class="text-[10px] font-bold">${item.qty}</span><button onclick="changeQty(${idx}, 1)" class="w-6 h-6 flex items-center justify-center bg-white dark:bg-black rounded-full shadow-sm">+</button></div>
+                </div>`;
+            }).join('');
+            document.getElementById('cartTotal').innerText = total.toLocaleString() + " F";
+        };
+
+        window.changeQty = (idx, d) => { cart[idx].qty += d; if(cart[idx].qty < 1) cart.splice(idx,1); window.updateCartUI(); updateCartBadge(); };
+
+        window.sendOrder = () => {
+            const n = document.getElementById('clientName').value, a = document.getElementById('clientArea').value;
+            if(!n || !a || !cart.length) return showToast("Informations manquantes !");
+            let m = `*NOUVELLE COMMANDE*%0A👤 Nom: ${n}%0A📍 Quartier: ${a}%0A----------------------------%0A`;
+            cart.forEach(i => m += `• ${i.qty}x *${i.name}* (${(i.promoPrice||i.price)*i.qty} F)%0A`);
+            m += `----------------------------%0A💰 TOTAL: ${document.getElementById('cartTotal').innerText}`;
+            window.open(`https://wa.me/221778165450?text=${m}`, '_blank');
+        };
+
+        // ADMIN & NAV
+        window.verifyAdmin = () => {
+            if(document.getElementById('adminPass').value === "2026") {
+                isGerantLoggedIn = true; window.isGerantLoggedIn = true;
+                document.getElementById('adminAuth').classList.add('hidden');
+                document.getElementById('adminTools').classList.remove('hidden');
+                renderAdminList(); renderCatSelect(); updateStats();
+                showToast("Accès Gérant Validé ✅");
+            } else showToast("Code erroné ❌");
+        };
+
         window.renderAdminList = () => {
             document.getElementById('adminProdList').innerHTML = window.allProducts.map(p => `
                 <div class="flex items-center gap-4 bg-white dark:bg-luxury p-3 rounded-2xl shadow-sm border dark:border-white/5">
                     <img src="${p.img}" class="w-10 h-10 rounded-lg object-cover">
                     <div class="flex-grow font-black text-[8px] uppercase truncate dark:text-white">${p.name}</div>
-                    <div class="flex gap-3">
-                        <button onclick="editProduct('${p.id}')" class="text-blue-500 text-lg"><i class="fas fa-edit"></i></button>
-                        <button onclick="if(confirm('Supprimer ?')) window.apiDelete('${p.id}')" class="text-red-500 text-lg"><i class="fas fa-trash"></i></button>
-                    </div>
+                    <div class="flex gap-3"><button onclick="editProduct('${p.id}')" class="text-blue-500"><i class="fas fa-edit"></i></button><button onclick="if(confirm('Supprimer ?')) window.apiDelete('${p.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></div>
                 </div>`).join('');
         };
 
@@ -311,26 +357,14 @@
             document.getElementById('pStock').checked = p.stock !== false;
             document.getElementById('photoPreview').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover rounded-xl">`;
             document.getElementById('clearPhotoBtn').classList.remove('hidden');
-            document.getElementById('submitBtn').innerText = "Sauvegarder les modifications";
-            document.getElementById('cancelBtn').classList.remove('hidden');
             window.scrollTo({top: 0, behavior: 'smooth'});
-        };
-
-        window.verifyAdmin = () => {
-            if(document.getElementById('adminPass').value === "2026") {
-                isGerantLoggedIn = true; window.isGerantLoggedIn = true;
-                document.getElementById('adminAuth').classList.add('hidden');
-                document.getElementById('adminTools').classList.remove('hidden');
-                renderAdminList(); renderCatSelect(); updateStats();
-                showToast("Accès Gérant Validé ✅");
-            } else { showToast("Code incorrect ❌"); }
         };
 
         function updateStats() {
             if(!isGerantLoggedIn) return;
             document.getElementById('statTotal').innerText = window.allProducts.length;
-            const totalValue = window.allProducts.reduce((acc, p) => acc + (p.price || 0), 0);
-            document.getElementById('statStock').innerText = totalValue.toLocaleString() + ' F';
+            const totalV = window.allProducts.reduce((acc, p) => acc + (p.price || 0), 0);
+            document.getElementById('statStock').innerText = totalV.toLocaleString() + ' F';
             document.getElementById('statOut').innerText = window.allProducts.filter(p => p.stock === false).length;
             document.getElementById('statPromo').innerText = window.allProducts.filter(p => p.promoPrice).length;
         }
@@ -359,9 +393,6 @@
 
         window.toggleWish = (id, e) => { e.stopPropagation(); const idx = wishlist.indexOf(id); if(idx > -1) wishlist.splice(idx,1); else wishlist.push(id); localStorage.setItem('cs_favs_market', JSON.stringify(wishlist)); updateWishCount(); window.renderItems(); };
         function updateWishCount() { const el = document.getElementById('wishCount'); if(el) { el.innerText = wishlist.length; el.classList.toggle('hidden', wishlist.length === 0); } }
-        window.addToCart = (id) => { const p = window.allProducts.find(x => x.id === id); const exist = cart.find(x => x.id === id); if(exist) exist.qty++; else cart.push({...p, qty: 1}); updateCartBadge(); showToast("Ajouté au panier ✨"); };
-        function updateCartBadge() { const b = document.getElementById('cartBadge'); const total = cart.reduce((a,c) => a + c.qty, 0); if(b) { b.innerText = total; b.classList.toggle('hidden', total === 0); } }
-        
         window.openAdmin = () => document.getElementById('adminPanel').classList.remove('hidden');
         window.closeAdmin = () => document.getElementById('adminPanel').classList.add('hidden');
         window.toggleTheme = () => { const d = document.documentElement.classList.toggle('dark'); localStorage.setItem('cs_theme', d ? 'dark' : 'light'); };
