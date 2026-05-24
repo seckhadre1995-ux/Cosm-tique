@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmetique Services | Majestic 2026</title>
+    <title>Cosmétique Services | Saint-Louis</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     
     <!-- SDK FIREBASE -->
     <script type="module">
@@ -27,370 +28,587 @@
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
       window.dbRef = ref(db, 'produits');
-      window.dbRefSingle = (id) => ref(db, 'produits/' + id);
+      
+      // API Globales
       window.apiSave = (data) => push(window.dbRef, data);
-      window.apiUpdate = (id, data) => set(window.dbRefSingle(id), data);
-      window.apiDelete = (id) => remove(window.dbRefSingle(id));
+      window.apiUpdate = (id, data) => set(ref(db, 'produits/' + id), data);
+      window.apiDelete = (id) => remove(ref(db, 'produits/' + id));
 
       onValue(window.dbRef, (snapshot) => {
         const data = snapshot.val();
         window.allProducts = data ? Object.keys(data).map(key => ({id: key, ...data[key]})) : [];
-        if (window.renderItems) window.renderItems();
-        if (window.renderAdminList) window.renderAdminList();
-        if (window.renderChips) window.renderChips();
+        renderItems();
+        renderChips();
+        if(document.getElementById('adminTools').classList.contains('hidden') === false) renderAdminList();
       });
     </script>
 
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { extend: { colors: { gold: '#C5A059', deep: '#050505', sand: '#F4F1ED' } } }
+            theme: { 
+                extend: { 
+                    colors: { gold: '#D4AF37', deep: '#0A0A0A', luxury: '#1a1a1a' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'] }
+                } 
+            }
         }
     </script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Poppins', sans-serif; background-color: #FDFDFD; color: #1a1a1a; transition: 0.5s; overflow-x: hidden; }
-        .dark body { background-color: #050505; color: #f4f1ed; }
-
-        /* HEADER INTELLIGENT */
-        #smartNav { transition: transform 0.4s ease; }
-        .nav-hidden { transform: translateY(-120%); }
-
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .dark .glass { background: rgba(10, 10, 10, 0.8); border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        #splash { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.8s; }
-        .splash-hide { transform: translateY(-100%); }
-
-        .p-card { background: white; border-radius: 25px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid #f0f0f0; }
-        .p-card:active { scale: 0.95; }
-        .dark .p-card { background: #111; border-color: #222; }
+        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .dark .glass { background: rgba(10, 10, 10, 0.8); }
         
+        .gold-gradient { background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C); }
+        .gold-text { background: linear-gradient(135deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .product-card { transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .product-card:hover { transform: translateY(-10px); }
+        
+        #splash { background: radial-gradient(circle, #1a1a1a 0%, #000 100%); transition: 1s ease-in-out; }
+        .splash-hide { opacity: 0; pointer-events: none; transform: scale(1.2); }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .gold-gradient { background: linear-gradient(135deg, #C5A059 0%, #F9F295 50%, #C5A059 100%); }
+        .shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        
+        .badge-new { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 
-<body class="pb-32">
+<body class="bg-[#FDFDFD] dark:bg-deep text-luxury dark:text-gray-100 transition-colors duration-500 pb-32">
 
-    <!-- 1. SPLASH SCREEN -->
-    <div id="splash">
-        <div class="w-20 h-20 border-4 border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] text-2xl font-bold animate-pulse">CS</div>
-        <h1 id="typewriter" class="text-white mt-5 text-xl font-bold uppercase tracking-widest px-4 text-center"></h1>
+    <!-- 1. SPLASH SCREEN LUXE -->
+    <div id="splash" class="fixed inset-0 z-[10000] flex flex-col items-center justify-center">
+        <div class="relative">
+            <div class="w-24 h-24 border-2 border-gold rounded-full animate-spin-slow flex items-center justify-center">
+                <span class="text-gold font-serif text-3xl font-bold tracking-tighter">CS</span>
+            </div>
+            <div class="absolute inset-0 w-24 h-24 border-t-2 border-white rounded-full animate-spin"></div>
+        </div>
+        <h1 id="typewriter" class="mt-8 font-serif text-2xl gold-text tracking-[0.3em] uppercase"></h1>
     </div>
 
-    <!-- NOTIFICATION TOAST -->
-    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-[11000] glass px-8 py-3 rounded-full text-xs font-bold shadow-2xl opacity-0 translate-y-[-50px] transition-all duration-500 pointer-events-none text-black dark:text-white"></div>
+    <!-- NOTIFICATION -->
+    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 z-[11000] glass px-6 py-3 rounded-2xl shadow-2xl opacity-0 transition-all duration-500 translate-y-[-20px] flex items-center gap-3">
+        <div class="w-2 h-2 bg-gold rounded-full"></div>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-black dark:text-white"></span>
+    </div>
 
-    <!-- NAVIGATION & RECHERCHE (SMART) -->
-    <div id="smartNav" class="fixed top-0 inset-x-0 z-[90] glass px-4 py-3 pb-4">
-        <div class="flex justify-between items-center mb-3 px-2">
-            <div class="flex flex-col">
-                <span class="text-lg font-black text-black dark:text-white tracking-tighter uppercase italic leading-none">CS <span class="text-gold">SHOP</span></span>
-                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Saint-Louis Ngallèle</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleDark()" class="w-9 h-9 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center">
-                    <i class="fas fa-moon dark:hidden text-gray-500"></i><i class="fas fa-sun hidden dark:block text-gold"></i>
-                </button>
-                <div class="relative cursor-pointer" onclick="openCart()">
-                    <i class="fas fa-shopping-bag text-2xl"></i>
-                    <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-deep hidden animate__animated animate__bounceIn">0</span>
+    <!-- SMART NAVBAR -->
+    <header id="smartNav" class="fixed top-0 inset-x-0 z-[90] glass border-b border-gray-100 dark:border-white/5 transition-transform duration-500">
+        <div class="max-w-6xl mx-auto px-5 py-4">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col">
+                    <h1 class="font-serif text-xl font-black tracking-tighter leading-none uppercase">Cosmétique <span class="gold-text italic">Services</span></h1>
+                    <p class="text-[7px] uppercase tracking-[0.4em] opacity-50 font-bold">L'Excellence à Saint-Louis</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleDark()" class="text-xl p-2"><i class="fas fa-adjust"></i></button>
+                    <div class="relative" onclick="openCart()">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cartBadge" class="absolute -top-2 -right-2 bg-gold text-deep text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-deep hidden">0</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Recherche stylisée -->
-        <div class="relative mb-3">
-            <input type="text" id="searchInput" oninput="renderItems()" placeholder="Rechercher une pépite..." class="w-full bg-gray-100 dark:bg-white/5 border-none rounded-2xl py-3 px-12 font-medium shadow-inner focus:ring-1 focus:ring-gold text-xs transition-all">
-            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+            
+            <div class="relative group">
+                <input type="text" id="searchInput" oninput="renderItems()" placeholder="Rechercher un parfum, un soin..." class="w-full bg-gray-100 dark:bg-white/5 border-none rounded-2xl py-3.5 pl-12 pr-4 text-xs font-medium focus:ring-2 ring-gold/20 transition-all outline-none">
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gold transition-colors"></i>
+            </div>
         </div>
 
-        <!-- Filtres Catégories Horizontaux -->
-        <div id="catBar" class="flex gap-2 overflow-x-auto no-scrollbar py-1"></div>
+        <!-- Catégories Animées -->
+        <div id="catBar" class="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-4"></div>
+    </header>
+
+    <!-- HERO SECTION MODERNE AVEC TA PHOTO -->
+    <section class="mt-48 px-5 max-w-6xl mx-auto">
+        <div class="relative h-72 rounded-[2.5rem] overflow-hidden shadow-2xl group border border-gold/20">
+            <img src="input_file_0.jpeg" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[10s]">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex flex-col justify-end p-8">
+                <span class="bg-gold text-white text-[8px] font-black px-3 py-1 rounded-full w-fit mb-3 uppercase tracking-widest badge-new">Votre Boutique</span>
+                <h2 class="text-white text-3xl font-serif font-bold leading-tight">La Beauté à<br><span class="gold-text italic">Saint-Louis</span></h2>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD STATS (Admin Only) -->
+    <div id="adminStats" class="hidden px-5 mt-8 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
+        <div class="bg-gold/10 p-4 rounded-3xl border border-gold/20">
+            <p class="text-[8px] uppercase font-bold opacity-60">Total Produits</p>
+            <p id="statCount" class="text-2xl font-black text-gold">0</p>
+        </div>
+        <div class="bg-black/5 dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/10">
+            <p class="text-[8px] uppercase font-bold opacity-60">Valeur Stock</p>
+            <p id="statValue" class="text-2xl font-black tracking-tighter">0 <span class="text-xs">FCFA</span></p>
+        </div>
     </div>
 
-    <!-- HERO SECTION (Pleine page au début) -->
-    <section class="mt-40 px-5">
-        <div class="relative h-56 rounded-[2.5rem] overflow-hidden shadow-2xl group">
-            <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110">
-            <div class="absolute inset-0 bg-black/40 flex flex-col justify-center px-8">
-                <span class="text-gold font-bold text-[9px] uppercase tracking-widest mb-1">Qualité Premium</span>
-                <h1 class="text-white text-3xl font-black leading-tight uppercase">La Beauté à <br> Portée de Main.</h1>
-            </div>
-        </div>
-    </section>
+    <!-- GRILLE PRODUITS -->
+    <main id="itemGrid" class="px-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-10 max-w-6xl mx-auto mb-20"></main>
 
-    <!-- GRILLE PRODUITS (PLUS AÉRÉE) -->
-    <main id="itemGrid" class="px-5 grid grid-cols-2 gap-5 mt-10 mb-20">
-        <!-- Les produits s'affichent ici -->
-    </main>
-
-    <!-- AVIS CLIENTES -->
-    <section class="mt-10 px-5 mb-10">
-        <h2 class="text-sm font-bold opacity-30 mb-6 uppercase tracking-[0.2em] text-center">Nos clientes adorent ✨</h2>
-        <div class="flex gap-4 overflow-x-auto no-scrollbar">
-            <div class="min-w-[260px] bg-white dark:bg-white/5 p-8 rounded-[2.5rem] shadow-sm italic text-xs leading-relaxed border border-gray-50 dark:border-white/5">
-                <p>"Meilleure boutique cosmétique de Saint-Louis. Livraison rapide à Ngallèle !"</p>
-                <p class="mt-4 font-black gold-text uppercase text-[8px]">Aminata D.</p>
-            </div>
-            <div class="min-w-[260px] bg-white dark:bg-white/5 p-8 rounded-[2.5rem] shadow-sm italic text-xs leading-relaxed border border-gray-50 dark:border-white/5">
-                <p>"Originalité garantie. Le panier WhatsApp est super simple."</p>
-                <p class="mt-4 font-black gold-text uppercase text-[8px]">Sokhna F.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- BOTTOM NAVIGATION -->
-    <nav class="fixed bottom-0 inset-x-0 h-20 glass z-[100] flex justify-around items-center px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-        <button onclick="nav('home')" class="nav-item flex flex-col items-center gap-1 text-gold font-bold"><i class="fas fa-home text-lg"></i><span class="text-[8px] uppercase">Boutique</span></button>
-        <button onclick="nav('wish')" class="nav-item flex flex-col items-center gap-1 text-gray-300 relative"><i class="fas fa-heart text-lg"></i><span id="wishCount" class="absolute -top-2 -right-3 bg-gold text-white text-[7px] font-black px-1.5 py-0.5 rounded-full hidden">0</span><span class="text-[8px] uppercase">Favoris</span></button>
-        <button onclick="openCart()" class="nav-item flex flex-col items-center gap-1 text-gray-300"><i class="fas fa-shopping-cart text-lg"></i><span class="text-[8px] uppercase">Panier</span></button>
-        <button onclick="openAdmin()" class="nav-item flex flex-col items-center gap-1 text-gray-300"><i class="fas fa-user-shield text-lg"></i><span class="text-[8px] uppercase">Gérant</span></button>
+    <!-- NAVIGATION BAS DE PAGE -->
+    <nav class="fixed bottom-6 inset-x-5 h-20 glass rounded-[2.5rem] z-[100] flex justify-around items-center px-4 shadow-2xl border border-white/20">
+        <button onclick="changeTab('home')" id="btn-home" class="flex flex-col items-center gap-1 text-gold"><i class="fas fa-home text-xl"></i><span class="text-[8px] uppercase font-bold">Boutique</span></button>
+        <button onclick="changeTab('wish')" id="btn-wish" class="flex flex-col items-center gap-1 text-gray-400 relative"><i class="fas fa-heart text-xl"></i><span id="wishCount" class="absolute -top-1 -right-2 bg-red-500 text-white text-[7px] w-4 h-4 rounded-full hidden flex items-center justify-center font-black">0</span><span class="text-[8px] uppercase font-bold">Favoris</span></button>
+        <button onclick="openCart()" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-shopping-bag text-xl"></i><span class="text-[8px] uppercase font-bold">Panier</span></button>
+        <button onclick="openAdmin()" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-crown text-xl"></i><span class="text-[8px] uppercase font-bold">Gérant</span></button>
     </nav>
 
-    <!-- WHATSAPP FLOAT -->
-    <a href="https://wa.me/221778165450" target="_blank" class="fixed bottom-24 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center text-2xl shadow-2xl z-[95] animate-bounce">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <!-- PANIER -->
-    <div id="cartOverlay" class="fixed inset-0 bg-black/60 z-[200] hidden transition-opacity" onclick="closeCart()"></div>
-    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-[85%] max-w-md bg-white dark:bg-[#0F0F0F] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl overflow-hidden">
-        <div class="p-6 border-b dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-black">
-            <h2 class="text-lg font-black uppercase">Mon Panier</h2>
-            <button onclick="closeCart()" class="text-3xl">&times;</button>
+    <!-- PANIER DRAWER -->
+    <div id="cartOverlay" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-sm" onclick="closeCart()"></div>
+    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#0A0A0A] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl rounded-l-[3rem] overflow-hidden">
+        <div class="p-8 border-b dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-black">
+            <div>
+                <h2 class="text-xl font-serif font-black uppercase tracking-widest">Mon Panier</h2>
+                <p class="text-[9px] opacity-50 uppercase tracking-tighter">Cosmétique Services</p>
+            </div>
+            <button onclick="closeCart()" class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-xl">&times;</button>
         </div>
-        <div id="cartItems" class="flex-grow overflow-y-auto p-5 space-y-4 no-scrollbar"></div>
-        <div class="p-6 bg-gray-50 dark:bg-white/5 border-t dark:border-white/5 space-y-5">
-            <div class="grid grid-cols-1 gap-3">
-                <input type="text" id="clientName" placeholder="Prénom et Nom" class="p-4 rounded-xl border outline-none text-sm bg-white dark:bg-black">
-                <input type="text" id="clientArea" placeholder="Votre Quartier (Ngallèle...)" class="p-4 rounded-xl border outline-none text-sm bg-white dark:bg-black">
+        <div id="cartItems" class="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar"></div>
+        <div class="p-8 space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <input type="text" id="clientName" placeholder="Votre Nom" class="p-4 rounded-2xl border dark:border-white/10 outline-none text-xs bg-gray-50 dark:bg-white/5 font-bold">
+                <input type="text" id="clientArea" placeholder="Quartier" class="p-4 rounded-2xl border dark:border-white/10 outline-none text-xs bg-gray-50 dark:bg-white/5 font-bold">
             </div>
-            <div class="flex justify-between items-center font-black px-2 uppercase">
-                <span class="text-xs opacity-40">Total</span>
-                <span id="cartTotal" class="text-xl text-gold font-bold">0 FCFA</span>
+            <div class="flex justify-between items-center py-4 border-t dark:border-white/10">
+                <span class="font-bold text-xs uppercase opacity-50">Total à payer</span>
+                <span id="cartTotal" class="text-2xl font-black gold-text">0 FCFA</span>
             </div>
-            <button onclick="sendOrder()" class="w-full bg-black dark:bg-gold text-white dark:text-deep py-5 rounded-2xl font-black shadow-xl text-xs uppercase tracking-widest">Commander via WhatsApp</button>
+            <button onclick="sendOrder()" class="w-full gold-gradient text-deep py-5 rounded-[2rem] font-black shadow-xl text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">Commander via WhatsApp</button>
         </div>
     </aside>
 
-    <!-- MODAL DETAIL -->
-    <div id="detailModal" class="fixed inset-0 z-[1000] hidden bg-black/95 flex flex-col items-center justify-center p-4">
-        <button onclick="closeDetail()" class="absolute top-6 right-6 text-white text-3xl">&times;</button>
-        <div class="bg-white dark:bg-[#111] w-full max-w-lg rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate__animated animate__fadeInUp">
-            <div id="detailPhoto" class="h-64 overflow-hidden"></div>
-            <div id="detailContent" class="p-8 space-y-4 overflow-y-auto max-h-[50vh]"></div>
-        </div>
-    </div>
-
     <!-- ADMIN PANEL -->
-    <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-black p-6 overflow-y-auto no-scrollbar flex flex-col animate__animated animate__fadeIn">
-        <div class="flex justify-between items-center mb-8"><h2 class="text-xl font-black gold-text uppercase">Gestion Boutique</h2><button onclick="closeAdmin()" class="text-4xl">&times;</button></div>
+    <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-deep p-6 overflow-y-auto no-scrollbar animate__animated animate__fadeInUp">
+        <div class="flex justify-between items-center mb-10 max-w-2xl mx-auto">
+            <h2 class="text-2xl font-serif gold-text uppercase">Espace Gestion</h2>
+            <button onclick="closeAdmin()" class="w-12 h-12 flex items-center justify-center text-3xl">&times;</button>
+        </div>
         
-        <div id="adminAuth" class="py-20 text-center">
-            <input type="password" id="adminPass" placeholder="••••" class="bg-transparent border-b-2 border-gold p-4 text-center text-4xl outline-none mb-10 w-40 dark:text-white font-bold">
-            <br><button onclick="verifyAdmin()" class="bg-gold text-white px-12 py-4 rounded-full font-black uppercase">Entrer</button>
+        <div id="adminAuth" class="max-w-xs mx-auto text-center py-20">
+            <p class="text-[10px] uppercase tracking-widest mb-4 opacity-50">Code d'accès requis</p>
+            <input type="password" id="adminPass" class="w-full bg-transparent border-b-2 border-gold p-4 text-center text-3xl outline-none mb-10 font-bold" placeholder="****">
+            <button onclick="verifyAdmin()" class="w-full gold-gradient text-black py-4 rounded-full font-black uppercase text-xs">Se connecter</button>
         </div>
 
-        <div id="adminTools" class="hidden space-y-8 pb-32">
-            <form id="saveForm" class="bg-gray-50 dark:bg-white/5 p-8 rounded-[2.5rem] space-y-6" onsubmit="saveProduct(event)">
+        <div id="adminTools" class="hidden max-w-2xl mx-auto space-y-10 pb-40">
+            <form id="saveForm" class="bg-gray-50 dark:bg-white/5 p-8 rounded-[3rem] space-y-5 border border-gray-100 dark:border-white/5 shadow-inner" onsubmit="handleSave(event)">
                 <input type="hidden" id="editId">
-                <div id="photoPreviews" class="grid grid-cols-4 gap-2"></div>
-                <label class="border-2 border-dashed border-gold/30 bg-gold/5 flex flex-col items-center justify-center w-full h-40 rounded-3xl cursor-pointer">
-                    <i class="fas fa-camera text-2xl text-gold mb-2"></i>
-                    <p class="text-[10px] font-bold text-gold uppercase">Ajouter Photos</p>
-                    <input type="file" multiple accept="image/*" onchange="handlePhotos(event)" class="hidden">
-                </label>
-
-                <input type="text" id="pName" placeholder="Nom de l'article" class="w-full p-4 rounded-xl border outline-none font-bold" required>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="pPrice" placeholder="Prix (FCFA)" class="w-full p-4 rounded-xl border font-black" required>
-                    <select id="pCat" class="w-full p-4 rounded-xl border font-bold text-xs">
-                        <option value="✨ Soins & Beauté">✨ Soins & Beauté</option>
-                        <option value="🌸 Parfumerie">🌸 Parfumerie</option>
-                        <option value="👜 Sacs & Luxe">👜 Sacs & Luxe</option>
-                        <option value="👟 Chaussures">👟 Chaussures</option>
-                        <option value="🧢 Casquettes">🧢 Casquettes</option>
-                        <option value="🌬️ Ventilateurs">🌬️ Ventilateurs</option>
-                        <option value="👶 Bébé">👶 Bébé</option>
-                        <option value="➕ Autre">➕ Autre catégorie...</option>
-                    </select>
+                <div class="flex gap-4 items-center">
+                    <label class="w-24 h-24 border-2 border-dashed border-gold/30 flex flex-col items-center justify-center rounded-3xl cursor-pointer hover:bg-gold/5">
+                        <i class="fas fa-camera text-gold mb-1"></i>
+                        <span class="text-[8px] font-bold uppercase text-gold">Photo</span>
+                        <input type="file" accept="image/*" onchange="handlePhoto(event)" class="hidden">
+                    </label>
+                    <div id="photoPreview" class="flex-grow h-24 rounded-3xl overflow-hidden bg-black/10"></div>
                 </div>
-                <textarea id="pDesc" placeholder="Description courte..." class="w-full p-4 rounded-xl border h-24 outline-none"></textarea>
-                <button type="submit" id="submitBtn" class="w-full bg-black text-white dark:bg-gold dark:text-black py-5 rounded-3xl font-black uppercase text-[10px] shadow-2xl tracking-[0.1em]">Publier sur le site</button>
-                <button type="button" id="cancelBtn" onclick="resetAdminForm()" class="hidden w-full text-red-500 font-bold uppercase text-[9px]">Annuler</button>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="pName" placeholder="Nom du produit" class="col-span-2 p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm" required>
+                    <input type="number" id="pPrice" placeholder="Prix (FCFA)" class="p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm" required>
+                    <input type="number" id="pPromo" placeholder="Ancien prix (Optionnel)" class="p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm">
+                    <select id="pCat" class="col-span-2 p-4 rounded-2xl border-none bg-white dark:bg-black text-xs font-bold shadow-sm">
+                        <option value="✨ Cosmétique">✨ Cosmétique & Soins</option>
+                        <option value="🌸 Parfums">🌸 Parfumerie de Luxe</option>
+                        <option value="👜 Sacs">👜 Maroquinerie / Sacs</option>
+                        <option value="👠 Mode">👠 Chaussures & Mode</option>
+                        <option value="⚡ Accessoires">⚡ Accessoires</option>
+                        <option value="➕ Autre">➕ Autre catégorie</option>
+                    </select>
+                    <div class="col-span-2 flex items-center gap-2 p-2">
+                        <label class="text-[10px] uppercase font-bold opacity-60">En stock ?</label>
+                        <input type="checkbox" id="pStock" checked class="w-5 h-5 accent-gold">
+                    </div>
+                </div>
+                <textarea id="pDesc" placeholder="Description courte..." class="w-full p-4 rounded-2xl border-none bg-white dark:bg-black text-xs h-24 shadow-sm"></textarea>
+                
+                <button type="submit" id="submitBtn" class="w-full gold-gradient text-deep py-5 rounded-2xl font-black uppercase text-[10px] shadow-lg tracking-widest">Publier sur la boutique</button>
+                <button type="button" onclick="resetForm()" id="cancelBtn" class="hidden w-full text-red-500 text-[10px] uppercase font-bold">Annuler la modification</button>
             </form>
+
             <div id="adminProdList" class="space-y-4"></div>
         </div>
     </div>
 
-    <script>
-        window.allProducts = [];
-        let cart = [];
-        let wishlist = JSON.parse(localStorage.getItem('cs_wish_db')) || [];
-        let filterCat = 'Tout';
-        let isWishView = false;
-        let tempPhotos = [];
-        let lastScrollTop = 0;
+    <!-- MODAL DETAIL PRODUIT -->
+    <div id="detailModal" class="fixed inset-0 z-[2000] hidden bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white dark:bg-[#111] rounded-[3rem] overflow-hidden shadow-2xl relative animate__animated animate__zoomIn">
+            <button onclick="closeDetail()" class="absolute top-6 right-6 w-10 h-10 bg-black/20 backdrop-blur-md text-white rounded-full flex items-center justify-center z-10">&times;</button>
+            <div id="detailImg" class="h-80 w-full overflow-hidden"></div>
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span id="detailCat" class="text-[8px] font-black uppercase tracking-[0.2em] text-gold"></span>
+                        <h2 id="detailName" class="text-2xl font-serif font-bold dark:text-white mt-1"></h2>
+                    </div>
+                    <div class="text-right">
+                        <p id="detailPrice" class="text-2xl font-black text-luxury dark:text-white"></p>
+                        <p id="detailPromo" class="text-xs line-through opacity-30"></p>
+                    </div>
+                </div>
+                <p id="detailDesc" class="text-xs opacity-60 leading-relaxed mb-8 italic"></p>
+                
+                <div class="flex gap-4">
+                    <button id="addBtnDetail" class="flex-grow gold-gradient text-deep py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Ajouter au panier</button>
+                    <button id="shareBtn" class="w-14 h-14 rounded-2xl border border-gray-100 dark:border-white/10 flex items-center justify-center text-xl active:bg-gold/10 transition-colors"><i class="fas fa-share-alt"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // --- SMART NAVIGATION LOGIC ---
-        window.addEventListener("scroll", function() {
-            let st = window.pageYOffset || document.documentElement.scrollTop;
-            if (st > lastScrollTop && st > 150) {
-                document.getElementById("smartNav").classList.add("nav-hidden");
-            } else {
-                document.getElementById("smartNav").classList.remove("nav-hidden");
-            }
-            lastScrollTop = st <= 0 ? 0 : st;
+    <script>
+        let cart = [];
+        let wishlist = JSON.parse(localStorage.getItem('cs_wish_2026')) || [];
+        let currentFilter = 'Tout';
+        let currentTab = 'home';
+        let currentPhoto = '';
+        let lastScroll = 0;
+
+        // INITIALISATION
+        setTimeout(() => {
+            document.getElementById('splash').classList.add('splash-hide');
+            typeText("Cosmétique Services", "typewriter");
+        }, 2500);
+
+        function typeText(txt, el) {
+            let i = 0;
+            const container = document.getElementById(el);
+            function type() { if(i < txt.length) { container.innerHTML += txt.charAt(i); i++; setTimeout(type, 100); } }
+            type();
+        }
+
+        // SMART NAV
+        window.addEventListener('scroll', () => {
+            const st = window.pageYOffset;
+            const nav = document.getElementById('smartNav');
+            if (st > lastScroll && st > 100) nav.style.transform = 'translateY(-100%)';
+            else nav.style.transform = 'translateY(0)';
+            lastScroll = st;
         });
 
-        // --- SPLASH ---
-        setTimeout(() => document.getElementById('splash').classList.add('splash-hide'), 3000);
-        const txt = "Cosmetique Services"; let i_t = 0;
-        const type = () => { if(i_t < txt.length){ document.getElementById('typewriter').innerHTML += txt.charAt(i_t); i_t++; setTimeout(type, 100); } };
-        type();
-
-        // --- RENDER PRODUCTS ---
-        window.renderItems = () => {
+        // RENDER
+        function renderItems() {
             const grid = document.getElementById('itemGrid');
             const search = document.getElementById('searchInput').value.toLowerCase();
             grid.innerHTML = '';
-            const items = window.allProducts.filter(p => (isWishView ? wishlist.includes(p.id) : (filterCat==='Tout' || p.cat.includes(filterCat)) && p.name.toLowerCase().includes(search)));
-            
-            items.forEach(p => {
-                const loved = wishlist.includes(p.id);
+
+            let filtered = window.allProducts.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(search);
+                const matchesFilter = currentFilter === 'Tout' || p.cat.includes(currentFilter);
+                const matchesWish = currentTab === 'wish' ? wishlist.includes(p.id) : true;
+                return matchesSearch && matchesFilter && matchesWish;
+            });
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center opacity-30 italic uppercase text-[10px] font-bold tracking-widest">Aucune pépite trouvée...</div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const isLoved = wishlist.includes(p.id);
+                const outOfStock = p.stock === false;
                 grid.innerHTML += `
-                    <div class="p-card shadow-sm flex flex-col relative animate__animated animate__fadeIn">
-                        <img src="${p.img}" onclick="openDetail('${p.id}')" class="w-full h-44 object-cover rounded-t-[25px] cursor-pointer">
-                        <button onclick="toggleWish('${p.id}', event)" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-md"><i class="fas fa-heart ${loved ? 'text-red-500' : 'text-gray-300'}"></i></button>
-                        <div class="p-4 flex flex-col flex-grow text-center">
-                            <span class="text-[7px] text-gold font-black uppercase opacity-60">${p.cat}</span>
-                            <h3 class="font-bold text-[9px] uppercase line-clamp-1 h-3 mt-1">${p.name}</h3>
-                            <p class="font-black text-[11px] mt-2">${p.price.toLocaleString()} FCFA</p>
-                            <button onclick="addToCart('${p.id}')" class="mt-3 w-full bg-black dark:bg-gold text-white dark:text-black py-3 rounded-2xl text-[9px] font-black uppercase active:scale-95 transition-all shadow-md">Ajouter</button>
+                    <div class="product-card bg-white dark:bg-white/5 rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-white/5 shadow-sm group relative">
+                        ${outOfStock ? '<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center"><span class="bg-white text-black text-[8px] font-black px-4 py-2 rounded-full uppercase">Épuisé</span></div>' : ''}
+                        <div class="relative h-48 overflow-hidden" onclick="openDetail('${p.id}')">
+                            <img src="${p.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            ${p.promo ? `<span class="absolute top-4 left-4 bg-red-500 text-white text-[8px] font-black px-3 py-1 rounded-full">- ${Math.round((1 - p.price/p.promo)*100)}%</span>` : ''}
+                        </div>
+                        <button onclick="toggleWish('${p.id}', event)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur dark:bg-black/50 flex items-center justify-center z-20 shadow-md">
+                            <i class="fa${isLoved?'s':'r'} fa-heart ${isLoved?'text-red-500 animate__animated animate__heartBeat':''}"></i>
+                        </button>
+                        <div class="p-5 flex flex-col items-center text-center">
+                            <span class="text-[7px] text-gold font-black uppercase tracking-[0.2em] mb-1">${p.cat}</span>
+                            <h3 class="font-bold text-[10px] uppercase truncate w-full mb-2 dark:text-white font-serif">${p.name}</h3>
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="font-black text-[12px]">${parseInt(p.price).toLocaleString()} <span class="text-[8px]">FCFA</span></span>
+                                ${p.promo ? `<span class="text-[9px] line-through opacity-30">${parseInt(p.promo).toLocaleString()}</span>` : ''}
+                            </div>
+                            <button onclick="addToCart('${p.id}')" ${outOfStock ? 'disabled' : ''} class="w-full gold-gradient py-3.5 rounded-2xl text-[9px] font-black uppercase text-deep shadow-md active:scale-95 transition-all">Ajouter</button>
                         </div>
                     </div>
                 `;
             });
-        };
+        }
 
-        window.renderChips = () => {
-            const cats = ['Tout', ...new Set(window.allProducts.map(p => p.cat.split(' ').pop()))];
-            document.getElementById('catBar').innerHTML = cats.map(c => `
-                <button onclick="setFilter('${c}')" class="px-5 py-2.5 rounded-2xl border text-[9px] font-bold whitespace-nowrap shadow-sm bg-white dark:bg-white/5 ${filterCat===c?'bg-black text-white border-black scale-105 transition-all':''} transition-all">${c.toUpperCase()}</button>
+        function renderChips() {
+            const cats = ['Tout', '✨ Cosmétique', '🌸 Parfums', '👜 Sacs', '👠 Mode', '⚡ Accessoires'];
+            const container = document.getElementById('catBar');
+            container.innerHTML = cats.map(c => `
+                <button onclick="setFilter('${c}')" class="px-6 py-3 rounded-full border dark:border-white/10 whitespace-nowrap text-[9px] font-bold uppercase tracking-widest transition-all ${currentFilter === c ? 'bg-gold text-deep border-gold scale-105 shadow-lg' : 'bg-white dark:bg-white/5 opacity-60'}">
+                    ${c}
+                </button>
             `).join('');
-        };
+        }
 
-        // --- CART ---
+        function setFilter(c) {
+            currentFilter = c;
+            currentTab = 'home';
+            renderItems();
+            renderChips();
+        }
+
+        // CART
         function addToCart(id) {
             const p = window.allProducts.find(x => x.id === id);
             const exist = cart.find(x => x.id === id);
             if(exist) exist.qty++; else cart.push({...p, qty: 1});
-            showToast("Ajouté au panier ! ✨");
+            updateCartBadge();
+            showToast("Produit ajouté au panier ! ✨");
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            const total = cart.reduce((acc, curr) => acc + curr.qty, 0);
+            badge.innerText = total;
+            badge.classList.toggle('hidden', total === 0);
+            if(total > 0) badge.classList.add('animate__bounceIn');
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cartItems');
+            let total = 0;
+            if(cart.length === 0) {
+                container.innerHTML = `<div class="py-20 text-center opacity-20 uppercase text-[9px] font-black tracking-widest">Votre panier est vide</div>`;
+            } else {
+                container.innerHTML = cart.map((item, idx) => {
+                    total += item.price * item.qty;
+                    return `
+                        <div class="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-[2rem] border border-gray-100 dark:border-white/5 animate__animated animate__fadeInRight" style="animation-delay: ${idx*0.1}s">
+                            <img src="${item.img}" class="w-16 h-16 rounded-2xl object-cover">
+                            <div class="flex-grow">
+                                <h4 class="text-[9px] font-black uppercase truncate w-32">${item.name}</h4>
+                                <p class="text-gold font-black text-xs">${item.price.toLocaleString()} FCFA</p>
+                                <div class="flex items-center gap-3 mt-2 bg-white dark:bg-black w-fit px-3 py-1 rounded-full shadow-sm">
+                                    <button onclick="changeQty(${idx}, -1)" class="text-lg">-</button>
+                                    <span class="text-xs font-bold">${item.qty}</span>
+                                    <button onclick="changeQty(${idx}, 1)" class="text-gold text-lg">+</button>
+                                </div>
+                            </div>
+                            <button onclick="removeFromCart(${idx})" class="w-8 h-8 flex items-center justify-center text-red-400 bg-red-50 dark:bg-red-500/10 rounded-full"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('cartTotal').innerText = total.toLocaleString() + " FCFA";
+        }
+
+        function changeQty(idx, delta) {
+            cart[idx].qty += delta;
+            if(cart[idx].qty < 1) cart.splice(idx, 1);
+            updateCartUI();
             updateCartBadge();
         }
-        function updateCartBadge() {
-            const total = cart.reduce((acc, curr) => acc + curr.qty, 0);
-            const b = document.getElementById('cartBadge');
-            b.innerText = total; b.classList.toggle('hidden', total === 0);
-            if(total > 0) b.classList.add('animate__bounceIn');
-        }
-        function updateCartUI() {
-            let total = 0;
-            const cont = document.getElementById('cartItems');
-            cont.innerHTML = cart.map((item, idx) => {
-                total += item.price * item.qty;
-                return `<div class="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-3xl border shadow-sm">
-                    <img src="${item.img}" class="w-16 h-16 rounded-xl object-cover shadow-sm">
-                    <div class="flex-grow">
-                        <h4 class="font-black text-[10px] uppercase leading-tight">${item.name}</h4>
-                        <p class="text-[10px] text-gold font-black mt-1">${item.price.toLocaleString()} FCFA</p>
-                        <div class="flex items-center gap-4 mt-2 bg-white dark:bg-black w-fit px-3 py-1 rounded-full border">
-                            <button onclick="changeQty(${idx},-1)" class="text-xs font-bold text-gray-400">-</button>
-                            <span class="font-black text-[11px]">${item.qty}</span>
-                            <button onclick="changeQty(${idx},1)" class="text-gold font-bold">+</button>
-                        </div>
-                    </div>
-                    <button onclick="cart.splice(${idx},1); updateCartUI(); updateCartBadge();" class="text-red-300 p-2"><i class="fas fa-trash-alt"></i></button>
-                </div>`;
-            }).join('');
-            document.getElementById('cartTotal').innerText = total.toLocaleString() + " FCFA";
-            if(!cart.length) cont.innerHTML = `<div class="text-center py-20 opacity-20 text-xs italic uppercase font-bold">Le panier est vide...</div>`;
-        }
-        window.changeQty = (idx, d) => { cart[idx].qty += d; if(cart[idx].qty < 1) cart.splice(idx,1); updateCartUI(); updateCartBadge(); };
 
-        // --- GÉRANT ---
-        function verifyAdmin() { if(document.getElementById('adminPass').value === '2026'){ document.getElementById('adminAuth').classList.add('hidden'); document.getElementById('adminTools').classList.remove('hidden'); window.renderAdminList(); } }
-        async function handlePhotos(e) {
-            for(let f of e.target.files) {
-                const b64 = await new Promise(res => { const r = new FileReader(); r.readAsDataURL(f); r.onload = ev => res(ev.target.result); });
-                tempPhotos.push(b64);
-            }
-            document.getElementById('photoPreviews').innerHTML = tempPhotos.map(p => `<img src="${p}" class="h-10 w-10 rounded border">`).join('');
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            updateCartUI();
+            updateCartBadge();
         }
-        window.saveProduct = async (e) => {
+
+        // ADMIN FUNCTIONS
+        function verifyAdmin() {
+            if(document.getElementById('adminPass').value === "2026") {
+                document.getElementById('adminAuth').classList.add('hidden');
+                document.getElementById('adminTools').classList.remove('hidden');
+                document.getElementById('adminStats').classList.remove('hidden');
+                renderAdminList();
+                updateStats();
+            } else {
+                showToast("Code erroné ❌");
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('statCount').innerText = window.allProducts.length;
+            const val = window.allProducts.reduce((a, b) => a + parseInt(b.price), 0);
+            document.getElementById('statValue').innerText = val.toLocaleString();
+        }
+
+        async function handlePhoto(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    currentPhoto = ev.target.result;
+                    document.getElementById('photoPreview').innerHTML = `<img src="${currentPhoto}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleSave(e) {
             e.preventDefault();
             const id = document.getElementById('editId').value;
-            if(!tempPhotos.length) return alert("Photo requise !");
-            const data = { name: document.getElementById('pName').value, price: parseInt(document.getElementById('pPrice').value), cat: document.getElementById('pCat').value, desc: document.getElementById('pDesc').value, img: tempPhotos[0] };
-            if(id) { await window.apiUpdate(id, data); showToast("Modifié ! ✨"); } 
-            else { await window.pushData(window.dbRef, data); showToast("Publié ! 🌍"); }
-            resetAdminForm();
-        };
-        window.renderAdminList = () => {
-            document.getElementById('adminProdList').innerHTML = window.allProducts.map(p => `
-                <div class="flex items-center gap-4 bg-white dark:bg-white/5 p-4 rounded-3xl border shadow-md">
-                    <img src="${p.img}" class="w-12 h-12 rounded-xl object-cover shadow-sm">
-                    <div class="flex-grow font-bold text-[9px] uppercase truncate">${p.name}</div>
+            const data = {
+                name: document.getElementById('pName').value,
+                price: parseInt(document.getElementById('pPrice').value),
+                promo: document.getElementById('pPromo').value ? parseInt(document.getElementById('pPromo').value) : null,
+                cat: document.getElementById('pCat').value,
+                desc: document.getElementById('pDesc').value,
+                stock: document.getElementById('pStock').checked,
+                img: currentPhoto
+            };
+
+            if(!currentPhoto) return showToast("Photo manquante ! 📸");
+
+            try {
+                if(id) await window.apiUpdate(id, data);
+                else await window.apiSave(data);
+                showToast(id ? "Mise à jour réussie ! ✨" : "Publication réussie ! 🌍");
+                resetForm();
+            } catch (err) {
+                showToast("Erreur lors de l'envoi ❌");
+            }
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('adminProdList');
+            list.innerHTML = window.allProducts.map(p => `
+                <div class="flex items-center gap-4 bg-white dark:bg-white/5 p-4 rounded-3xl border border-gray-100 dark:border-white/5">
+                    <img src="${p.img}" class="w-12 h-12 rounded-xl object-cover">
+                    <div class="flex-grow">
+                        <p class="text-[10px] font-black uppercase truncate w-32">${p.name}</p>
+                        <p class="text-[9px] text-gold font-bold">${p.price} FCFA</p>
+                    </div>
                     <div class="flex gap-2">
-                        <button onclick="editProduct('${p.id}')" class="text-blue-500 bg-blue-50 p-2 rounded-full w-8 h-8 flex items-center justify-center"><i class="fas fa-pen text-[10px]"></i></button>
-                        <button onclick="if(confirm('Supprimer ?')) window.apiDelete('${p.id}')" class="text-red-400 bg-red-50 p-2 rounded-full w-8 h-8 flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button>
+                        <button onclick="editProduct('${p.id}')" class="w-8 h-8 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center"><i class="fas fa-pen text-[10px]"></i></button>
+                        <button onclick="confirmDelete('${p.id}')" class="w-8 h-8 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button>
                     </div>
                 </div>
             `).join('');
-        };
+        }
+
         function editProduct(id) {
             const p = window.allProducts.find(x => x.id === id);
             document.getElementById('editId').value = p.id;
             document.getElementById('pName').value = p.name;
             document.getElementById('pPrice').value = p.price;
+            document.getElementById('pPromo').value = p.promo || '';
             document.getElementById('pCat').value = p.cat;
             document.getElementById('pDesc').value = p.desc;
-            tempPhotos = [p.img]; document.getElementById('photoPreviews').innerHTML = `<img src="${p.img}" class="h-10 w-10 rounded border">`;
-            document.getElementById('submitBtn').innerText = "Mettre à jour";
+            document.getElementById('pStock').checked = p.stock !== false;
+            currentPhoto = p.img;
+            document.getElementById('photoPreview').innerHTML = `<img src="${currentPhoto}" class="w-full h-full object-cover">`;
+            document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
             document.getElementById('cancelBtn').classList.remove('hidden');
-            window.scrollTo({top: 0, behavior:'smooth'});
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
-        function resetAdminForm() { document.getElementById('saveForm').reset(); document.getElementById('editId').value = ""; document.getElementById('submitBtn').innerText = "Publier"; document.getElementById('cancelBtn').classList.add('hidden'); tempPhotos = []; document.getElementById('photoPreviews').innerHTML = ""; }
 
-        // --- HELPERS ---
-        function toggleDark() { const d = document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', d ? 'dark' : 'light'); }
+        function confirmDelete(id) {
+            if(confirm("Voulez-vous vraiment supprimer ce produit ?")) {
+                window.apiDelete(id);
+                showToast("Supprimé ! 🗑️");
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('saveForm').reset();
+            document.getElementById('editId').value = "";
+            document.getElementById('photoPreview').innerHTML = "";
+            currentPhoto = "";
+            document.getElementById('submitBtn').innerText = "Publier sur la boutique";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        }
+
+        // WHATSAPP ORDER
+        function sendOrder() {
+            const name = document.getElementById('clientName').value;
+            const area = document.getElementById('clientArea').value;
+            if(!name || !area || cart.length === 0) return showToast("Veuillez remplir vos infos ! 📍");
+
+            let message = `*COMMANDE COSMÉTIQUE SERVICES*%0A%0A`;
+            message += `👤 *Client:* ${name}%0A`;
+            message += `📍 *Lieu:* ${area}%0A`;
+            message += `----------------------------%0A`;
+            
+            cart.forEach(item => {
+                message += `• ${item.qty}x *${item.name}* (${item.price * item.qty} FCFA)%0A`;
+            });
+
+            message += `----------------------------%0A`;
+            message += `💰 *TOTAL:* ${document.getElementById('cartTotal').innerText}`;
+            
+            window.open(`https://wa.me/221778165450?text=${message}`, '_blank');
+        }
+
+        // HELPERS UI
+        function toggleDark() { document.documentElement.classList.toggle('dark'); }
         function openCart() { document.getElementById('cartDrawer').style.transform = 'translateX(0)'; document.getElementById('cartOverlay').classList.remove('hidden'); updateCartUI(); }
         function closeCart() { document.getElementById('cartDrawer').style.transform = 'translateX(100%)'; document.getElementById('cartOverlay').classList.add('hidden'); }
         function openAdmin() { document.getElementById('adminPanel').classList.remove('hidden'); }
         function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
-        function setFilter(c) { filterCat = c; isWishView = false; window.renderItems(); window.renderChips(); }
-        function nav(t) { if(t === 'home'){ filterCat = 'Tout'; isWishView = false; } if(t === 'wish'){ isWishView = true; } window.renderItems(); }
-        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = '1'; t.style.transform = 'translate(-50%, 0)'; setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -50px)'; }, 2000); }
-        function sendOrder() {
-            const n = document.getElementById('clientName').value; const a = document.getElementById('clientArea').value;
-            if(!n || !a || !cart.length) return showToast("Veuillez remplir vos infos ! 📍");
-            let m = `*COMMANDE COSMETIQUE SERVICES*\n📍 Client: ${n} (${a})\n--------------------------------\n`;
-            cart.forEach(i => m += `• ${i.qty}x ${i.name} (${i.price * i.qty} FCFA)\n`);
-            m += `--------------------------------\nTOTAL : ${document.getElementById('cartTotal').innerText}`;
-            window.open(`https://wa.me/221778165450?text=${encodeURIComponent(m)}`, '_blank');
+        
+        function changeTab(t) {
+            currentTab = t;
+            document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-gold', 'text-gray-400'));
+            document.getElementById('btn-'+t).classList.replace('text-gray-400', 'text-gold');
+            renderItems();
         }
-        function toggleWish(id, e) { e.stopPropagation(); const idx = wishlist.indexOf(id); if(idx > -1) wishlist.splice(idx,1); else wishlist.push(id); localStorage.setItem('cs_wish_db', JSON.stringify(wishlist)); updateWishCount(); window.renderItems(); }
-        function updateWishCount() { const b = document.getElementById('wishCount'); b.innerText = wishlist.length; b.classList.toggle('hidden', wishlist.length === 0); }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.querySelector('span').innerText = msg;
+            t.style.opacity = '1';
+            t.style.transform = 'translate(-50%, 20px)';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translate(-50%, -20px)';
+            }, 3000);
+        }
+
+        function toggleWish(id, e) {
+            e.stopPropagation();
+            const idx = wishlist.indexOf(id);
+            if(idx > -1) wishlist.splice(idx, 1);
+            else wishlist.push(id);
+            localStorage.setItem('cs_wish_2026', JSON.stringify(wishlist));
+            updateWishCount();
+            renderItems();
+        }
+
+        function updateWishCount() {
+            const el = document.getElementById('wishCount');
+            el.innerText = wishlist.length;
+            el.classList.toggle('hidden', wishlist.length === 0);
+        }
+
         function openDetail(id) {
             const p = window.allProducts.find(x => x.id === id);
-            document.getElementById('detailPhoto').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
-            document.getElementById('detailContent').innerHTML = `<h2 class="text-xl font-black uppercase">${p.name}</h2><p class="text-xs text-gray-500 italic leading-relaxed">"${p.desc || 'Produit d\'exception.'}"</p><p class="text-xl font-bold text-gold">${p.price.toLocaleString()} FCFA</p><button onclick="addToCart('${p.id}'); closeDetail();" class="w-full gold-gradient py-4 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest shadow-xl">Ajouter au panier</button>`;
+            document.getElementById('detailImg').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
+            document.getElementById('detailName').innerText = p.name;
+            document.getElementById('detailCat').innerText = p.cat;
+            document.getElementById('detailPrice').innerText = p.price.toLocaleString() + " FCFA";
+            document.getElementById('detailPromo').innerText = p.promo ? p.promo.toLocaleString() + " FCFA" : "";
+            document.getElementById('detailDesc').innerText = p.desc || "Ce produit premium a été sélectionné avec soin par Cosmétique Services pour sa qualité d'exception.";
+            
+            document.getElementById('addBtnDetail').onclick = () => { addToCart(p.id); closeDetail(); };
+            document.getElementById('shareBtn').onclick = () => shareProduct(p);
+            
+            document.getElementById('detailModal').classList.remove('hidden');
             document.getElementById('detailModal').style.display = 'flex';
         }
+
         function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
+
+        async function shareProduct(p) {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: p.name,
+                        text: `Regarde ce produit chez Cosmétique Services : ${p.name} à ${p.price} FCFA`,
+                        url: window.location.href,
+                    });
+                } catch (err) {}
+            } else {
+                showToast("Lien copié ! 📋");
+            }
+        }
+
+        updateWishCount();
     </script>
 </body>
 </html>
