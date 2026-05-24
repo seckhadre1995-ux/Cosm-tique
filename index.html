@@ -36,6 +36,7 @@
         if(window.isGerantLoggedIn) { renderAdminList(); updateStats(); }
       });
 
+      // Correction ici pour garantir le retour de promesse
       window.apiSave = (data) => push(window.dbRef, data);
       window.apiUpdate = (id, data) => set(ref(db, 'produits/' + id), data);
       window.apiDelete = (id) => remove(ref(db, 'produits/' + id));
@@ -68,7 +69,6 @@
 
 <body class="bg-[#F9F9F9] dark:bg-deep text-luxury dark:text-gray-100 pb-32">
 
-    <!-- SPLASH SCREEN -->
     <div id="splash">
         <div class="w-16 h-16 border-2 border-gold rounded-full flex items-center justify-center animate-spin mb-4">
             <span class="text-gold font-serif text-xl font-bold animate-pulse">CS</span>
@@ -76,12 +76,10 @@
         <h1 class="text-white font-serif text-lg tracking-[0.3em] font-bold uppercase">Cosmétique Services</h1>
     </div>
 
-    <!-- TOAST -->
     <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[11000] glass px-8 py-4 rounded-3xl shadow-2xl opacity-0 transition-all duration-500 translate-y-[-50px] border border-gold/20">
         <span id="toastMsg" class="text-[10px] font-black uppercase tracking-widest text-black dark:text-white"></span>
     </div>
 
-    <!-- HEADER -->
     <header class="fixed top-0 inset-x-0 z-[90] glass border-b border-gray-100 dark:border-white/5 px-6 py-5">
         <div class="max-w-6xl mx-auto space-y-5">
             <div class="flex justify-between items-center">
@@ -105,7 +103,6 @@
         <div id="catBar" class="flex gap-2 overflow-x-auto no-scrollbar px-6 mt-4"></div>
     </header>
 
-    <!-- CONTENT -->
     <section class="mt-48 px-6 text-center py-10">
         <h2 class="font-serif text-3xl font-black mb-2 animate__animated animate__fadeInUp">Marketplace <span class="gold-text italic">Premium</span></h2>
         <p class="text-[8px] opacity-40 uppercase font-black">Cosmétique • Mode • Tech • Maison</p>
@@ -113,7 +110,6 @@
 
     <main id="itemGrid" class="px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-6xl mx-auto mb-20"></main>
 
-    <!-- NAVIGATION BAS -->
     <nav class="fixed bottom-6 inset-x-6 h-16 glass rounded-[2rem] z-[100] flex justify-around items-center px-2 shadow-2xl border border-white/20">
         <button onclick="changeTab('home')" id="nav-home" class="flex flex-col items-center gap-1 text-gold"><i class="fas fa-house-chimney text-lg"></i><span class="text-[7px] uppercase font-black">Boutique</span></button>
         <button onclick="changeTab('wish')" id="nav-wish" class="flex flex-col items-center gap-1 text-gray-400 relative"><i class="fas fa-heart text-lg"></i><span id="wishCount" class="absolute -top-1 -right-1 bg-gold text-black text-[7px] w-4 h-4 rounded-full hidden flex items-center justify-center font-black">0</span><span class="text-[7px] uppercase font-black">Favoris</span></button>
@@ -121,7 +117,6 @@
         <button onclick="openAdmin()" id="nav-admin" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-crown text-lg"></i><span class="text-[7px] uppercase font-black">Gérant</span></button>
     </nav>
 
-    <!-- PANIER -->
     <div id="cartOverlay" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-md" onclick="closeCart()"></div>
     <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#080808] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl rounded-l-[2rem] overflow-hidden">
         <div class="p-8 border-b dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-black">
@@ -137,7 +132,6 @@
         </div>
     </aside>
 
-    <!-- ADMIN PANEL -->
     <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-deep p-6 overflow-y-auto no-scrollbar">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-10">
@@ -145,14 +139,12 @@
                 <button onclick="closeAdmin()" class="text-4xl">&times;</button>
             </div>
             
-            <!-- AUTH -->
             <div id="adminAuth" class="text-center py-20 flex flex-col items-center">
                 <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mb-8"><i class="fas fa-user-shield text-gold text-3xl"></i></div>
                 <input type="password" id="adminPass" class="w-full max-w-xs bg-transparent border-b-2 border-gold p-4 text-center text-3xl outline-none mb-10 font-black dark:text-white" placeholder="••••">
                 <button onclick="verifyAdmin()" class="w-full max-w-xs gold-gradient text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest">Se Connecter</button>
             </div>
 
-            <!-- TOOLS -->
             <div id="adminTools" class="hidden space-y-10 pb-40">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-gray-100 dark:bg-white/5 p-5 rounded-3xl text-center"><p class="text-[7px] font-black opacity-40">ARTICLES</p><p id="statTotal" class="text-xl font-black">0</p></div>
@@ -190,7 +182,6 @@
         </div>
     </div>
 
-    <!-- MODAL DETAIL -->
     <div id="detailModal" class="fixed inset-0 z-[2000] hidden bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
         <div class="w-full max-w-lg bg-white dark:bg-luxury rounded-[2.5rem] overflow-hidden shadow-2xl relative animate__animated animate__zoomIn">
             <button onclick="closeDetail()" class="absolute top-5 right-5 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center text-xl z-10">&times;</button>
@@ -225,7 +216,6 @@
             }
         }
 
-        // COMPRESSION PHOTO (Optimisée pour Firebase)
         function previewAndCompress(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -236,19 +226,18 @@
                 img.src = event.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 500;
+                    const MAX_WIDTH = 600;
                     const scale = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    compressedImg = canvas.toDataURL('image/jpeg', 0.5); // Qualité 0.5 pour éviter erreurs réseau
+                    compressedImg = canvas.toDataURL('image/jpeg', 0.6); 
                     document.getElementById('photoPreview').innerHTML = `<img src="${compressedImg}" class="w-full h-full object-cover">`;
                 };
             };
         }
 
-        // RENDU
         window.renderItems = () => {
             const grid = document.getElementById('itemGrid');
             if(!grid || !window.allProducts) return;
@@ -286,7 +275,6 @@
             `).join('');
         };
 
-        // ADMIN
         window.verifyAdmin = () => {
             if(document.getElementById('adminPass').value === "2026") {
                 isGerantLoggedIn = true; window.isGerantLoggedIn = true;
@@ -297,15 +285,19 @@
             } else { showToast("Code erroné ❌"); }
         };
 
+        // CORRECTION MAJEURE ICI : Gestion des erreurs et du nettoyage
         window.handleSave = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "Synchronisation...";
+            const originalText = btn.innerText;
             
             const id = document.getElementById('editId').value;
             const finalImg = compressedImg || document.getElementById('currentImgUrl').value;
             
-            if(!finalImg) { btn.disabled = false; btn.innerText = "Publier l'Article"; return showToast("Photo Requise !"); }
+            if(!finalImg) return showToast("Photo Requise ! 📸");
+
+            btn.disabled = true; 
+            btn.innerText = "Synchronisation...";
 
             const data = {
                 name: document.getElementById('pName').value,
@@ -324,12 +316,15 @@
                 } else {
                     await window.apiSave(data);
                 }
-                showToast("Publié avec succès ! ✅");
-                resetForm();
+                
+                showToast("Opération réussie ! ✅");
+                resetForm(); // Vide tout pour la suite
             } catch (err) { 
-                showToast("Erreur de connexion ❌"); 
+                console.error(err);
+                showToast("Erreur de connexion Firebase ❌"); 
             } finally { 
-                btn.disabled = false; btn.innerText = "Publier l'Article"; 
+                btn.disabled = false; 
+                btn.innerText = "Publier l'Article"; 
             }
         };
 
@@ -358,14 +353,17 @@
             document.getElementById('photoPreview').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
             document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
             document.getElementById('cancelBtn').classList.remove('hidden');
+            compressedImg = ''; // Très important
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
+        // CORRECTION ICI : Nettoyage complet
         window.resetForm = () => {
             document.getElementById('saveForm').reset();
             document.getElementById('editId').value = "";
             document.getElementById('currentImgUrl').value = "";
-            document.getElementById('fileInput').value = ""; // Vider le sélecteur
-            compressedImg = ''; // Vider la variable d'image
+            document.getElementById('fileInput').value = ""; // Vide l'input file
+            compressedImg = ''; // Vide la variable image
             document.getElementById('photoPreview').innerHTML = `<i class="fas fa-camera text-gold text-2xl"></i>`;
             document.getElementById('submitBtn').innerText = "Publier l'Article";
             document.getElementById('cancelBtn').classList.add('hidden');
@@ -382,6 +380,7 @@
 
         window.setFilter = (c) => { currentFilter = c; currentTab = 'home'; window.renderItems(); window.renderChips(); updateNavUI(); };
         window.changeTab = (t) => { currentTab = t; if(t === 'home') currentFilter = 'Tout'; window.renderItems(); updateNavUI(); };
+        
         function updateNavUI() {
             document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-gold', 'text-gray-400'));
             const act = document.getElementById('nav-' + currentTab);
@@ -402,6 +401,7 @@
             localStorage.setItem('cs_favs_market', JSON.stringify(wishlist));
             updateWishCount(); window.renderItems();
         };
+
         function updateWishCount() { const el = document.getElementById('wishCount'); if(el) { el.innerText = wishlist.length; el.classList.toggle('hidden', wishlist.length === 0); } }
 
         window.addToCart = (id) => { const p = window.allProducts.find(x => x.id === id); const exist = cart.find(x => x.id === id); if(exist) exist.qty++; else cart.push({...p, qty: 1}); updateCartBadge(); showToast("Panier mis à jour ✨"); };
@@ -421,6 +421,7 @@
         };
 
         window.changeQty = (idx, d) => { cart[idx].qty += d; if(cart[idx].qty < 1) cart.splice(idx,1); window.updateCartUI(); updateCartBadge(); };
+        
         window.sendOrder = () => {
             const n = document.getElementById('clientName').value, a = document.getElementById('clientArea').value;
             if(!n || !a || !cart.length) return showToast("Veuillez remplir vos infos !");
@@ -441,6 +442,7 @@
             document.getElementById('addBtnDetail').onclick = () => { addToCart(p.id); closeDetail(); };
             document.getElementById('detailModal').style.display = 'flex';
         };
+
         window.closeDetail = () => document.getElementById('detailModal').style.display = 'none';
         window.openCart = () => { document.getElementById('cartDrawer').style.transform = 'translateX(0)'; document.getElementById('cartOverlay').classList.remove('hidden'); window.updateCartUI(); };
         window.closeCart = () => { document.getElementById('cartDrawer').style.transform = 'translateX(100%)'; document.getElementById('cartOverlay').classList.add('hidden'); };
@@ -450,8 +452,8 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             renderCatSelect();
-            setTimeout(() => { document.getElementById('splash').classList.add('splash-hide'); }, 2500);
-            setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 3500);
+            setTimeout(() => { document.getElementById('splash').classList.add('splash-hide'); }, 1500);
+            setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 2500);
         });
     </script>
 </body>
