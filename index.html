@@ -36,11 +36,7 @@
         if(window.isGerantLoggedIn) { renderAdminList(); updateStats(); }
       });
 
-      // Correction de la gestion des promesses Firebase
-      window.apiSave = (data) => {
-        const newRef = push(window.dbRef);
-        return set(newRef, data);
-      };
+      window.apiSave = (data) => push(window.dbRef, data);
       window.apiUpdate = (id, data) => set(ref(db, 'produits/' + id), data);
       window.apiDelete = (id) => remove(ref(db, 'produits/' + id));
     </script>
@@ -64,14 +60,12 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         #splash { background: #000; position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.8s ease-in-out; }
         .splash-hide { opacity: 0; visibility: hidden; pointer-events: none; }
-        .p-card { transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid rgba(0,0,0,0.05); }
-        .dark .p-card { border-color: rgba(255,255,255,0.05); }
-        .p-card:active { transform: scale(0.96); }
     </style>
 </head>
 
 <body class="bg-[#F9F9F9] dark:bg-deep text-luxury dark:text-gray-100 pb-32">
 
+    <!-- SPLASH SCREEN -->
     <div id="splash">
         <div class="w-16 h-16 border-2 border-gold rounded-full flex items-center justify-center animate-spin mb-4">
             <span class="text-gold font-serif text-xl font-bold animate-pulse">CS</span>
@@ -79,10 +73,12 @@
         <h1 class="text-white font-serif text-lg tracking-[0.3em] font-bold uppercase">Cosmétique Services</h1>
     </div>
 
+    <!-- TOAST -->
     <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[11000] glass px-8 py-4 rounded-3xl shadow-2xl opacity-0 transition-all duration-500 translate-y-[-50px] border border-gold/20">
         <span id="toastMsg" class="text-[10px] font-black uppercase tracking-widest text-black dark:text-white"></span>
     </div>
 
+    <!-- HEADER -->
     <header class="fixed top-0 inset-x-0 z-[90] glass border-b border-gray-100 dark:border-white/5 px-6 py-5">
         <div class="max-w-6xl mx-auto space-y-5">
             <div class="flex justify-between items-center">
@@ -106,13 +102,9 @@
         <div id="catBar" class="flex gap-2 overflow-x-auto no-scrollbar px-6 mt-4"></div>
     </header>
 
-    <section class="mt-48 px-6 text-center py-10">
-        <h2 class="font-serif text-3xl font-black mb-2 animate__animated animate__fadeInUp">Marketplace <span class="gold-text italic">Premium</span></h2>
-        <p class="text-[8px] opacity-40 uppercase font-black">Cosmétique • Mode • Tech • Maison</p>
-    </section>
+    <main id="itemGrid" class="mt-48 px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-6xl mx-auto mb-20"></main>
 
-    <main id="itemGrid" class="px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-6xl mx-auto mb-20"></main>
-
+    <!-- NAVIGATION -->
     <nav class="fixed bottom-6 inset-x-6 h-16 glass rounded-[2rem] z-[100] flex justify-around items-center px-2 shadow-2xl border border-white/20">
         <button onclick="changeTab('home')" id="nav-home" class="flex flex-col items-center gap-1 text-gold"><i class="fas fa-house-chimney text-lg"></i><span class="text-[7px] uppercase font-black">Boutique</span></button>
         <button onclick="changeTab('wish')" id="nav-wish" class="flex flex-col items-center gap-1 text-gray-400 relative"><i class="fas fa-heart text-lg"></i><span id="wishCount" class="absolute -top-1 -right-1 bg-gold text-black text-[7px] w-4 h-4 rounded-full hidden flex items-center justify-center font-black">0</span><span class="text-[7px] uppercase font-black">Favoris</span></button>
@@ -120,21 +112,7 @@
         <button onclick="openAdmin()" id="nav-admin" class="flex flex-col items-center gap-1 text-gray-400"><i class="fas fa-crown text-lg"></i><span class="text-[7px] uppercase font-black">Gérant</span></button>
     </nav>
 
-    <div id="cartOverlay" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-md" onclick="closeCart()"></div>
-    <aside id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#080808] z-[210] translate-x-full transition-transform duration-500 flex flex-col shadow-2xl rounded-l-[2rem] overflow-hidden">
-        <div class="p-8 border-b dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-black">
-            <h2 class="text-xl font-serif font-black uppercase">Mon Panier</h2>
-            <button onclick="closeCart()" class="text-3xl">&times;</button>
-        </div>
-        <div id="cartItems" class="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar"></div>
-        <div class="p-8 space-y-4 bg-white dark:bg-luxury border-t dark:border-white/5">
-            <div class="flex justify-between items-center mb-4"><span class="text-xs font-bold opacity-40 uppercase tracking-widest">Total</span><span id="cartTotal" class="text-2xl font-black gold-text">0 F</span></div>
-            <input type="text" id="clientName" placeholder="Votre Nom complet" class="w-full p-4 rounded-xl bg-gray-100 dark:bg-white/5 text-[11px] font-bold outline-none border dark:border-white/5">
-            <input type="text" id="clientArea" placeholder="Quartier de livraison" class="w-full p-4 rounded-xl bg-gray-100 dark:bg-white/5 text-[11px] font-bold outline-none border dark:border-white/5">
-            <button onclick="sendOrder()" class="w-full gold-gradient text-black py-5 rounded-2xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all">Commander WhatsApp</button>
-        </div>
-    </aside>
-
+    <!-- ADMIN PANEL -->
     <div id="adminPanel" class="fixed inset-0 z-[5000] hidden bg-white dark:bg-deep p-6 overflow-y-auto no-scrollbar">
         <div class="max-w-4xl mx-auto">
             <div class="flex justify-between items-center mb-10">
@@ -143,60 +121,58 @@
             </div>
             
             <div id="adminAuth" class="text-center py-20 flex flex-col items-center">
-                <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mb-8"><i class="fas fa-user-shield text-gold text-3xl"></i></div>
                 <input type="password" id="adminPass" class="w-full max-w-xs bg-transparent border-b-2 border-gold p-4 text-center text-3xl outline-none mb-10 font-black dark:text-white" placeholder="••••">
-                <button onclick="verifyAdmin()" class="w-full max-w-xs gold-gradient text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest">Se Connecter</button>
+                <button onclick="verifyAdmin()" class="w-full max-w-xs gold-gradient text-black py-5 rounded-2xl font-black uppercase text-[10px]">Se Connecter</button>
             </div>
 
             <div id="adminTools" class="hidden space-y-10 pb-40">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-gray-100 dark:bg-white/5 p-5 rounded-3xl text-center"><p class="text-[7px] font-black opacity-40">ARTICLES</p><p id="statTotal" class="text-xl font-black">0</p></div>
-                    <div class="bg-gold/10 p-5 rounded-3xl text-center"><p class="text-[7px] font-black text-gold">STOCK VALEUR</p><p id="statStock" class="text-xl font-black text-gold">0 F</p></div>
+                    <div class="bg-gold/10 p-5 rounded-3xl text-center"><p class="text-[7px] font-black text-gold">VALEUR</p><p id="statStock" class="text-xl font-black text-gold">0 F</p></div>
                     <div class="bg-red-500/10 p-5 rounded-3xl text-center"><p class="text-[7px] font-black text-red-500">RUPTURE</p><p id="statOut" class="text-xl font-black">0</p></div>
-                    <div class="bg-green-500/10 p-5 rounded-3xl text-center"><p class="text-[7px] font-black text-green-500">PROMO</p><p id="statPromo" class="text-xl font-black">0</p></div>
+                    <div class="bg-green-500/10 p-5 rounded-3xl text-center"><p class="text-[7px] font-black text-green-500">PROMOS</p><p id="statPromo" class="text-xl font-black">0</p></div>
                 </div>
 
+                <!-- FORMULAIRE CORRIGÉ -->
                 <form id="saveForm" class="bg-gray-50 dark:bg-luxury p-8 rounded-[2.5rem] space-y-5 border dark:border-white/5 shadow-inner" onsubmit="handleSave(event)">
                     <input type="hidden" id="editId">
                     <input type="hidden" id="currentImgUrl">
+                    
                     <div class="flex items-center gap-6">
-                        <div class="w-28 h-28 rounded-2xl bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden border-2 border-dashed border-gold relative" id="photoPreview">
-                            <i class="fas fa-camera text-gold text-2xl"></i>
-                            <input type="file" id="fileInput" accept="image/*" onchange="previewAndCompress(event)" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <!-- CONTAINER PHOTO RELATIVE POUR LE BOUTON X -->
+                        <div class="relative w-28 h-28">
+                            <div class="w-full h-full rounded-2xl bg-gray-200 dark:bg-white/10 flex items-center justify-center overflow-hidden border-2 border-dashed border-gold relative" id="photoPreview">
+                                <i class="fas fa-camera text-gold text-2xl"></i>
+                            </div>
+                            <!-- INPUT CACHÉ SUR TOUTE LA ZONE -->
+                            <input type="file" id="fileInput" accept="image/*" onchange="previewAndCompress(event)" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                            
+                            <!-- BOUTON X BIEN VISIBLE (Rouge) -->
+                            <button type="button" id="clearPhotoBtn" onclick="clearPhoto(event)" class="absolute -top-3 -right-3 w-8 h-8 bg-red-600 text-white rounded-full hidden z-[100] flex items-center justify-center shadow-xl border-2 border-white">
+                                <i class="fas fa-times text-xs"></i>
+                            </button>
                         </div>
+
                         <div class="flex-grow space-y-4">
-                            <input type="text" id="pName" placeholder="Nom du produit" class="w-full p-4 rounded-xl bg-white dark:bg-black border-none text-[11px] font-bold outline-none" required>
+                            <input type="text" id="pName" placeholder="Nom du produit" class="w-full p-4 rounded-xl bg-white dark:bg-black text-[11px] font-bold outline-none" required>
                             <div class="grid grid-cols-2 gap-4">
-                                <input type="number" id="pPrice" placeholder="Prix (F)" class="p-4 rounded-xl bg-white dark:bg-black border-none text-[11px] font-black outline-none" required>
-                                <input type="number" id="pPromo" placeholder="Ancien Prix" class="p-4 rounded-xl bg-white dark:bg-black border-none text-[11px] font-black outline-none">
+                                <input type="number" id="pPrice" placeholder="Prix (F)" class="p-4 rounded-xl bg-white dark:bg-black text-[11px] font-black outline-none" required>
+                                <input type="number" id="pPromo" placeholder="Ancien Prix" class="p-4 rounded-xl bg-white dark:bg-black text-[11px] font-black outline-none">
                             </div>
                         </div>
                     </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select id="pCat" class="p-4 rounded-xl bg-white dark:bg-black border-none text-[11px] font-bold outline-none" required></select>
+                        <select id="pCat" class="p-4 rounded-xl bg-white dark:bg-black text-[11px] font-bold outline-none" required></select>
                         <label class="flex items-center justify-between px-5 bg-white dark:bg-black rounded-xl text-[9px] font-black uppercase opacity-60">En Stock <input type="checkbox" id="pStock" checked class="w-5 h-5 accent-gold"></label>
                     </div>
-                    <textarea id="pDesc" placeholder="Description luxe..." class="w-full p-4 rounded-xl bg-white dark:bg-black border-none text-[11px] h-24 outline-none"></textarea>
+                    <textarea id="pDesc" placeholder="Description luxe..." class="w-full p-4 rounded-xl bg-white dark:bg-black text-[11px] h-24 outline-none"></textarea>
+                    
                     <button type="submit" id="submitBtn" class="w-full gold-gradient text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">Publier l'Article</button>
-                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden w-full text-red-500 font-bold uppercase text-[9px]">Annuler la modification</button>
+                    <button type="button" id="cancelBtn" onclick="resetForm()" class="hidden w-full text-red-500 font-bold uppercase text-[9px] text-center">Annuler la modification</button>
                 </form>
-                <div id="adminProdList" class="space-y-4 pb-20"></div>
-            </div>
-        </div>
-    </div>
 
-    <div id="detailModal" class="fixed inset-0 z-[2000] hidden bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
-        <div class="w-full max-w-lg bg-white dark:bg-luxury rounded-[2.5rem] overflow-hidden shadow-2xl relative animate__animated animate__zoomIn">
-            <button onclick="closeDetail()" class="absolute top-5 right-5 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center text-xl z-10">&times;</button>
-            <div id="detailImg" class="h-80 w-full overflow-hidden"></div>
-            <div class="p-10">
-                <span id="detailCat" class="text-[8px] font-black text-gold uppercase tracking-widest mb-2 block"></span>
-                <h2 id="detailName" class="text-2xl font-serif font-black mb-3 dark:text-white uppercase tracking-tight"></h2>
-                <p id="detailDesc" class="text-xs opacity-60 italic mb-10 leading-relaxed"></p>
-                <div class="flex justify-between items-end">
-                    <div><p id="detailPrice" class="text-3xl font-black dark:text-white"></p><p id="detailPromo" class="text-sm line-through opacity-20"></p></div>
-                    <button id="addBtnDetail" class="px-10 py-5 gold-gradient text-black rounded-2xl font-black uppercase text-[10px]">Ajouter au Panier</button>
-                </div>
+                <div id="adminProdList" class="space-y-4 pb-20"></div>
             </div>
         </div>
     </div>
@@ -204,21 +180,14 @@
     <script>
         let cart = [], wishlist = JSON.parse(localStorage.getItem('cs_favs_market')) || [], currentFilter = 'Tout', currentTab = 'home', compressedImg = '', isGerantLoggedIn = false;
         
-        const categories = [
-            '✨ Cosmétique', '🌸 Parfums', '👕 Vêtements', '👟 Chaussures', '📱 Électronique', 
-            '🎧 Accessoires Tech', '⌚ Montres & Bijoux', '👜 Sacs & Maroquinerie', '🏠 Maison & Déco', 
-            '💄 Maquillage', '⚡ Accessoires', '🎮 Gaming', '🛒 Supermarché', '🧸 Enfants & Jouets', 
-            '🏋️ Sport', '📚 Livres & Fournitures', '🚗 Auto & Moto', '➕ Autre'
-        ];
+        const categories = ['✨ Cosmétique', '🌸 Parfums', '👕 Vêtements', '👟 Chaussures', '📱 Électronique', '⌚ Bijoux', '👜 Sacs', '🏠 Maison', '💄 Maquillage', '➕ Autre'];
 
         function renderCatSelect() {
             const select = document.getElementById('pCat');
-            if(select) {
-                select.innerHTML = '<option value="" disabled selected>Choisir une catégorie</option>' + 
-                categories.map(c => `<option value="${c}">${c}</option>`).join('');
-            }
+            if(select) select.innerHTML = '<option value="" disabled selected>Catégorie</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
+        // COMPRESSION FORTE (Pour éviter erreur réseau)
         function previewAndCompress(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -229,75 +198,37 @@
                 img.src = event.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600;
+                    const MAX_WIDTH = 380; // Taille optimale
                     const scale = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    compressedImg = canvas.toDataURL('image/jpeg', 0.6); 
-                    document.getElementById('photoPreview').innerHTML = `<img src="${compressedImg}" class="w-full h-full object-cover">`;
+                    compressedImg = canvas.toDataURL('image/jpeg', 0.4); 
+                    document.getElementById('photoPreview').innerHTML = `<img src="${compressedImg}" class="w-full h-full object-cover rounded-xl">`;
+                    document.getElementById('clearPhotoBtn').classList.remove('hidden');
                 };
             };
         }
 
-        window.renderItems = () => {
-            const grid = document.getElementById('itemGrid');
-            if(!grid || !window.allProducts) return;
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            grid.innerHTML = '';
-            let filtered = window.allProducts.filter(p => {
-                const matchesSearch = p.name?.toLowerCase().includes(search) || p.cat?.toLowerCase().includes(search);
-                const matchesFilter = currentFilter === 'Tout' || p.cat === currentFilter;
-                const matchesTab = currentTab === 'wish' ? wishlist.includes(p.id) : true;
-                return matchesSearch && matchesFilter && matchesTab;
-            });
-            filtered.forEach(p => {
-                const out = p.stock === false; const loved = wishlist.includes(p.id);
-                grid.innerHTML += `
-                    <div class="p-card bg-white dark:bg-luxury rounded-[2.5rem] overflow-hidden shadow-sm relative animate__animated animate__fadeIn">
-                        ${out ? '<div class="absolute inset-0 bg-black/60 z-10 flex items-center justify-center text-center"><span class="bg-white text-black text-[7px] font-black px-4 py-2 rounded-full uppercase">Épuisé</span></div>' : ''}
-                        <button onclick="toggleWish('${p.id}', event)" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/80 dark:bg-black/30 backdrop-blur flex items-center justify-center z-20">
-                            <i class="fa${loved?'s':'r'} fa-heart ${loved?'text-red-500':''}"></i>
-                        </button>
-                        <div class="h-48 overflow-hidden cursor-pointer" onclick="openDetail('${p.id}')"><img src="${p.img}" class="w-full h-full object-cover" loading="lazy"></div>
-                        <div class="p-6 text-center">
-                            <span class="text-[7px] text-gold font-black uppercase tracking-widest">${p.cat}</span>
-                            <h3 class="font-bold text-[10px] uppercase truncate my-2 dark:text-white">${p.name}</h3>
-                            <p class="font-black text-[12px] dark:text-white mb-4">${(p.promoPrice || p.price).toLocaleString()} F</p>
-                            <button onclick="addToCart('${p.id}')" ${out ? 'disabled' : ''} class="w-full gold-gradient text-black py-4 rounded-2xl text-[9px] font-black uppercase shadow-lg">Ajouter</button>
-                        </div>
-                    </div>`;
-            });
-        };
-
-        window.renderChips = () => {
-            const list = ['Tout', ...categories];
-            document.getElementById('catBar').innerHTML = list.map(c => `
-                <button onclick="setFilter('${c}')" class="px-6 py-3 rounded-full border dark:border-white/5 whitespace-nowrap text-[9px] font-bold transition-all ${currentFilter === c ? 'gold-gradient text-black' : 'bg-white dark:bg-white/5 opacity-40'}">${c}</button>
-            `).join('');
-        };
-
-        window.verifyAdmin = () => {
-            if(document.getElementById('adminPass').value === "2026") {
-                isGerantLoggedIn = true; window.isGerantLoggedIn = true;
-                document.getElementById('adminAuth').classList.add('hidden');
-                document.getElementById('adminTools').classList.remove('hidden');
-                renderAdminList(); renderCatSelect(); updateStats();
-                showToast("Accès Validé ✅");
-            } else { showToast("Code erroné ❌"); }
+        // EFFACER LA PHOTO
+        window.clearPhoto = (e) => {
+            if(e) e.stopPropagation();
+            compressedImg = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('photoPreview').innerHTML = `<i class="fas fa-camera text-gold text-2xl"></i>`;
+            document.getElementById('clearPhotoBtn').classList.add('hidden');
         };
 
         window.handleSave = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            
             const id = document.getElementById('editId').value;
             const finalImg = compressedImg || document.getElementById('currentImgUrl').value;
             
-            if(!finalImg) return showToast("Photo Requise ! 📸");
-
-            btn.disabled = true; 
+            if(!finalImg) return showToast("Photo obligatoire ! 📸");
+            
+            btn.disabled = true;
             btn.innerText = "Synchronisation...";
 
             const data = {
@@ -312,29 +243,56 @@
             };
 
             try {
-                if(id) {
-                    await window.apiUpdate(id, data);
-                } else {
-                    await window.apiSave(data);
-                }
-                
-                showToast("Opération réussie ! ✅");
-                resetForm(); 
-            } catch (err) { 
-                console.error("Erreur Firebase :", err);
-                showToast("Erreur de connexion Firebase ❌"); 
-            } finally { 
-                btn.disabled = false; 
-                btn.innerText = id ? "Enregistrer les modifications" : "Publier l'Article"; 
+                if(id) { await window.apiUpdate(id, data); showToast("Mis à jour avec succès ! ✅"); }
+                else { await window.apiSave(data); showToast("Publié avec succès ! ✅"); }
+                resetForm();
+            } catch (err) {
+                showToast("Erreur Réseau (Photo trop lourde) ❌");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Publier l'Article";
             }
+        };
+
+        window.resetForm = () => {
+            document.getElementById('saveForm').reset();
+            document.getElementById('editId').value = "";
+            document.getElementById('currentImgUrl').value = "";
+            clearPhoto();
+            document.getElementById('submitBtn').innerText = "Publier l'Article";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        };
+
+        window.renderItems = () => {
+            const grid = document.getElementById('itemGrid');
+            if(!grid || !window.allProducts) return;
+            grid.innerHTML = '';
+            window.allProducts.filter(p => {
+                const matchesSearch = p.name?.toLowerCase().includes(document.getElementById('searchInput').value.toLowerCase());
+                const matchesFilter = currentFilter === 'Tout' || p.cat === currentFilter;
+                return matchesSearch && matchesFilter && (currentTab === 'wish' ? wishlist.includes(p.id) : true);
+            }).forEach(p => {
+                const out = p.stock === false; const loved = wishlist.includes(p.id);
+                grid.innerHTML += `<div class="p-card bg-white dark:bg-luxury rounded-[2rem] overflow-hidden shadow-sm relative border dark:border-white/5">
+                    ${out ? '<div class="absolute inset-0 bg-black/60 z-10 flex items-center justify-center font-black text-white text-[8px]">ÉPUISÉ</div>' : ''}
+                    <button onclick="toggleWish('${p.id}', event)" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 flex items-center justify-center shadow-sm"><i class="fa${loved?'s':'r'} fa-heart ${loved?'text-red-500':''}"></i></button>
+                    <img src="${p.img}" class="h-40 w-full object-cover">
+                    <div class="p-4 text-center">
+                        <span class="text-[6px] text-gold font-black uppercase">${p.cat}</span>
+                        <h3 class="font-bold text-[9px] truncate my-1 dark:text-white uppercase">${p.name}</h3>
+                        <p class="font-black text-[11px] dark:text-white mb-3">${(p.promoPrice || p.price).toLocaleString()} F</p>
+                        <button onclick="addToCart('${p.id}')" ${out ? 'disabled' : ''} class="w-full gold-gradient text-black py-3 rounded-xl text-[8px] font-black uppercase">Ajouter</button>
+                    </div>
+                </div>`;
+            });
         };
 
         window.renderAdminList = () => {
             document.getElementById('adminProdList').innerHTML = window.allProducts.map(p => `
-                <div class="flex items-center gap-4 bg-white dark:bg-luxury p-4 rounded-3xl border dark:border-white/5 shadow-sm">
-                    <img src="${p.img}" class="w-12 h-12 rounded-xl object-cover">
-                    <div class="flex-grow font-black text-[9px] uppercase truncate dark:text-white">${p.name}</div>
-                    <div class="flex gap-4">
+                <div class="flex items-center gap-4 bg-white dark:bg-luxury p-3 rounded-2xl shadow-sm border dark:border-white/5">
+                    <img src="${p.img}" class="w-10 h-10 rounded-lg object-cover">
+                    <div class="flex-grow font-black text-[8px] uppercase truncate dark:text-white">${p.name}</div>
+                    <div class="flex gap-3">
                         <button onclick="editProduct('${p.id}')" class="text-blue-500 text-lg"><i class="fas fa-edit"></i></button>
                         <button onclick="if(confirm('Supprimer ?')) window.apiDelete('${p.id}')" class="text-red-500 text-lg"><i class="fas fa-trash"></i></button>
                     </div>
@@ -351,36 +309,41 @@
             document.getElementById('pCat').value = p.cat;
             document.getElementById('pDesc').value = p.desc;
             document.getElementById('pStock').checked = p.stock !== false;
-            document.getElementById('photoPreview').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
-            document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
+            document.getElementById('photoPreview').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover rounded-xl">`;
+            document.getElementById('clearPhotoBtn').classList.remove('hidden');
+            document.getElementById('submitBtn').innerText = "Sauvegarder les modifications";
             document.getElementById('cancelBtn').classList.remove('hidden');
-            compressedImg = ''; 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({top: 0, behavior: 'smooth'});
         };
 
-        window.resetForm = () => {
-            document.getElementById('saveForm').reset();
-            document.getElementById('editId').value = "";
-            document.getElementById('currentImgUrl').value = "";
-            document.getElementById('fileInput').value = ""; 
-            compressedImg = ''; 
-            document.getElementById('photoPreview').innerHTML = `<i class="fas fa-camera text-gold text-2xl"></i>`; 
-            document.getElementById('submitBtn').innerText = "Publier l'Article";
-            document.getElementById('cancelBtn').classList.add('hidden');
+        window.verifyAdmin = () => {
+            if(document.getElementById('adminPass').value === "2026") {
+                isGerantLoggedIn = true; window.isGerantLoggedIn = true;
+                document.getElementById('adminAuth').classList.add('hidden');
+                document.getElementById('adminTools').classList.remove('hidden');
+                renderAdminList(); renderCatSelect(); updateStats();
+                showToast("Accès Gérant Validé ✅");
+            } else { showToast("Code incorrect ❌"); }
         };
 
         function updateStats() {
             if(!isGerantLoggedIn) return;
             document.getElementById('statTotal').innerText = window.allProducts.length;
-            const total = window.allProducts.reduce((acc, p) => acc + (p.price || 0), 0);
-            document.getElementById('statStock').innerText = total.toLocaleString() + ' F';
+            const totalValue = window.allProducts.reduce((acc, p) => acc + (p.price || 0), 0);
+            document.getElementById('statStock').innerText = totalValue.toLocaleString() + ' F';
             document.getElementById('statOut').innerText = window.allProducts.filter(p => p.stock === false).length;
             document.getElementById('statPromo').innerText = window.allProducts.filter(p => p.promoPrice).length;
         }
 
+        window.renderChips = () => {
+            const list = ['Tout', ...categories];
+            document.getElementById('catBar').innerHTML = list.map(c => `
+                <button onclick="setFilter('${c}')" class="px-5 py-2 rounded-full border dark:border-white/5 whitespace-nowrap text-[8px] font-bold transition-all ${currentFilter === c ? 'gold-gradient text-black' : 'bg-white dark:bg-white/5 opacity-40'}">${c}</button>
+            `).join('');
+        };
+
         window.setFilter = (c) => { currentFilter = c; currentTab = 'home'; window.renderItems(); window.renderChips(); updateNavUI(); };
         window.changeTab = (t) => { currentTab = t; if(t === 'home') currentFilter = 'Tout'; window.renderItems(); updateNavUI(); };
-        
         function updateNavUI() {
             document.querySelectorAll('nav button').forEach(b => b.classList.replace('text-gold', 'text-gray-400'));
             const act = document.getElementById('nav-' + currentTab);
@@ -394,66 +357,18 @@
             setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, -50px)'; }, 3000);
         };
 
-        window.toggleWish = (id, e) => {
-            e.stopPropagation();
-            const idx = wishlist.indexOf(id);
-            if(idx > -1) wishlist.splice(idx,1); else wishlist.push(id);
-            localStorage.setItem('cs_favs_market', JSON.stringify(wishlist));
-            updateWishCount(); window.renderItems();
-        };
-
+        window.toggleWish = (id, e) => { e.stopPropagation(); const idx = wishlist.indexOf(id); if(idx > -1) wishlist.splice(idx,1); else wishlist.push(id); localStorage.setItem('cs_favs_market', JSON.stringify(wishlist)); updateWishCount(); window.renderItems(); };
         function updateWishCount() { const el = document.getElementById('wishCount'); if(el) { el.innerText = wishlist.length; el.classList.toggle('hidden', wishlist.length === 0); } }
-
-        window.addToCart = (id) => { const p = window.allProducts.find(x => x.id === id); const exist = cart.find(x => x.id === id); if(exist) exist.qty++; else cart.push({...p, qty: 1}); updateCartBadge(); showToast("Panier mis à jour ✨"); };
+        window.addToCart = (id) => { const p = window.allProducts.find(x => x.id === id); const exist = cart.find(x => x.id === id); if(exist) exist.qty++; else cart.push({...p, qty: 1}); updateCartBadge(); showToast("Ajouté au panier ✨"); };
         function updateCartBadge() { const b = document.getElementById('cartBadge'); const total = cart.reduce((a,c) => a + c.qty, 0); if(b) { b.innerText = total; b.classList.toggle('hidden', total === 0); } }
-
-        window.updateCartUI = () => {
-            let total = 0;
-            document.getElementById('cartItems').innerHTML = cart.map((item, idx) => {
-                const price = item.promoPrice || item.price; total += price * item.qty;
-                return `<div class="flex items-center gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border dark:border-white/5">
-                    <img src="${item.img}" class="w-14 h-14 rounded-lg object-cover">
-                    <div class="flex-grow font-black text-[9px] uppercase dark:text-white">${item.name}<p class="text-gold font-black">${price.toLocaleString()} F</p></div>
-                    <div class="flex items-center gap-3"><button onclick="changeQty(${idx}, -1)" class="w-6 h-6 flex items-center justify-center bg-white dark:bg-black rounded-full border border-black/5 font-bold">-</button><span class="text-[10px] font-bold">${item.qty}</span><button onclick="changeQty(${idx}, 1)" class="w-6 h-6 flex items-center justify-center bg-white dark:bg-black rounded-full border border-black/5 font-bold">+</button></div>
-                </div>`;
-            }).join('');
-            document.getElementById('cartTotal').innerText = total.toLocaleString() + " F";
-        };
-
-        window.changeQty = (idx, d) => { cart[idx].qty += d; if(cart[idx].qty < 1) cart.splice(idx,1); window.updateCartUI(); updateCartBadge(); };
         
-        window.sendOrder = () => {
-            const n = document.getElementById('clientName').value, a = document.getElementById('clientArea').value;
-            if(!n || !a || !cart.length) return showToast("Veuillez remplir vos infos !");
-            let m = `*COMMANDE COSMÉTIQUE SERVICES*%0A👤 Client: ${n}%0A📍 Lieu: ${a}%0A----------------------------%0A`;
-            cart.forEach(i => m += `• ${i.qty}x *${i.name}* (${(i.promoPrice||i.price)*i.qty} F)%0A`);
-            m += `----------------------------%0A💰 TOTAL: ${document.getElementById('cartTotal').innerText}`;
-            window.open(`https://wa.me/221778165450?text=${m}`, '_blank');
-        };
-
-        window.openDetail = (id) => {
-            const p = window.allProducts.find(x => x.id === id);
-            document.getElementById('detailImg').innerHTML = `<img src="${p.img}" class="w-full h-full object-cover">`;
-            document.getElementById('detailName').innerText = p.name;
-            document.getElementById('detailCat').innerText = p.cat;
-            document.getElementById('detailPrice').innerText = (p.promoPrice || p.price).toLocaleString() + " F";
-            document.getElementById('detailPromo').innerText = p.promoPrice ? p.price.toLocaleString() + " F" : "";
-            document.getElementById('detailDesc').innerText = p.desc || "Exclusivité Cosmétique Services.";
-            document.getElementById('addBtnDetail').onclick = () => { addToCart(p.id); closeDetail(); };
-            document.getElementById('detailModal').style.display = 'flex';
-        };
-
-        window.closeDetail = () => document.getElementById('detailModal').style.display = 'none';
-        window.openCart = () => { document.getElementById('cartDrawer').style.transform = 'translateX(0)'; document.getElementById('cartOverlay').classList.remove('hidden'); window.updateCartUI(); };
-        window.closeCart = () => { document.getElementById('cartDrawer').style.transform = 'translateX(100%)'; document.getElementById('cartOverlay').classList.add('hidden'); };
         window.openAdmin = () => document.getElementById('adminPanel').classList.remove('hidden');
         window.closeAdmin = () => document.getElementById('adminPanel').classList.add('hidden');
         window.toggleTheme = () => { const d = document.documentElement.classList.toggle('dark'); localStorage.setItem('cs_theme', d ? 'dark' : 'light'); };
         
         document.addEventListener('DOMContentLoaded', () => {
             renderCatSelect();
-            setTimeout(() => { document.getElementById('splash').classList.add('splash-hide'); }, 1500);
-            setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 2500);
+            setTimeout(() => { document.getElementById('splash').classList.add('splash-hide'); }, 1200);
         });
     </script>
 </body>
